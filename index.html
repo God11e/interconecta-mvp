@@ -152,20 +152,89 @@ footer{max-width:1120px;margin:36px auto 0;padding:22px 0;border-top:1px solid v
   .menu{grid-template-columns:1fr 1fr}
   .org-content{padding:22px 16px 60px}
 }
+
+/* auth */
+.auth-screen{
+  min-height:calc(100vh - 69px);
+  display:grid;
+  place-items:center;
+  padding:42px 20px;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(14,122,103,.08), transparent 28%),
+    radial-gradient(circle at 85% 90%, rgba(24,50,71,.08), transparent 30%),
+    var(--bg)
+}
+.auth-card{
+  width:min(440px,100%);
+  background:#fff;border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 18px 55px rgba(23,25,28,.08);padding:28px
+}
+.auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.auth-brand .name{font-size:24px;font-weight:850;letter-spacing:-.03em}
+.auth-title{font-size:28px;letter-spacing:-.035em;margin:0 0 8px}
+.auth-copy{color:var(--muted);line-height:1.55;margin:0 0 20px}
+.role-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;padding:4px;background:#f3f4f4;border-radius:11px}
+.role-switch button{border:0;background:transparent;border-radius:8px;padding:10px;font-weight:750;color:var(--muted)}
+.role-switch button.active{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.auth-form{display:grid;gap:12px}
+.auth-help{margin-top:16px;padding:12px;border-radius:10px;background:#f7f7f5;border:1px solid var(--line);font-size:13px;color:var(--muted);line-height:1.5}
+.user-chip{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#edf2f4;color:var(--navy);font-size:12px;font-weight:850}
+
 </style>
 </head>
 <body>
 <header class="topbar">
   <div class="shell topnav">
     <div class="brand"><div class="mark">IC</div><span>Inter<em>Conecta</em></span></div>
-    <div class="nav-actions">
-      <button class="btn btn-outline" onclick="showView('user')">Explorar</button>
-      <button class="btn btn-primary" onclick="showView('org')">Panel organizador</button>
+    <div class="nav-actions" id="sessionActions" style="display:none">
+      <div class="user-chip">
+        <div class="avatar" id="sessionAvatar">U</div>
+        <div style="font-size:13px"><strong id="sessionName">Usuario</strong><div id="sessionRole" style="color:var(--muted);font-size:11px">Cliente</div></div>
+      </div>
+      <button class="btn btn-outline" onclick="logout()">Cerrar sesión</button>
     </div>
   </div>
 </header>
 
-<section id="userView" class="view active">
+
+<section id="authView" class="view active">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="mark">IC</div>
+        <div class="name">Inter<span style="color:var(--green)">Conecta</span></div>
+      </div>
+      <h1 class="auth-title">Inicia sesión</h1>
+      <p class="auth-copy">Accede como cliente para descubrir y reservar actividades, o como administrador para gestionar tu local.</p>
+
+      <div class="role-switch">
+        <button id="roleClientBtn" class="active" onclick="selectRole('client')">Cliente</button>
+        <button id="roleAdminBtn" onclick="selectRole('admin')">Administrador</button>
+      </div>
+
+      <div class="auth-form">
+        <div class="field">
+          <label>Correo</label>
+          <input id="loginEmail" type="email" value="cliente@demo.cl">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input id="loginPassword" type="password" value="demo123">
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="login()">Entrar</button>
+      </div>
+
+      <div class="auth-help" id="authHelp">
+        <strong>Demo cliente</strong><br>
+        cliente@demo.cl · demo123
+      </div>
+      <div id="loginMsg"></div>
+    </div>
+  </div>
+</section>
+
+<section id="userView" class="view">
   <main class="user-main shell">
     <div class="hero">
       <div class="eyebrow">Del scroll al panorama</div>
@@ -295,6 +364,75 @@ footer{max-width:1120px;margin:36px auto 0;padding:22px 0;border-top:1px solid v
 
 <script>
 const ORG_ID="taller_manos";
+
+let selectedRole="client";
+
+function selectRole(role){
+  selectedRole=role;
+  document.getElementById("roleClientBtn").classList.toggle("active",role==="client");
+  document.getElementById("roleAdminBtn").classList.toggle("active",role==="admin");
+  if(role==="client"){
+    document.getElementById("loginEmail").value="cliente@demo.cl";
+    document.getElementById("loginPassword").value="demo123";
+    document.getElementById("authHelp").innerHTML="<strong>Demo cliente</strong><br>cliente@demo.cl · demo123";
+  }else{
+    document.getElementById("loginEmail").value="admin@tallermanos.cl";
+    document.getElementById("loginPassword").value="admin123";
+    document.getElementById("authHelp").innerHTML="<strong>Demo administrador</strong><br>admin@tallermanos.cl · admin123";
+  }
+  document.getElementById("loginMsg").innerHTML="";
+}
+
+function login(){
+  const email=document.getElementById("loginEmail").value.trim().toLowerCase();
+  const password=document.getElementById("loginPassword").value;
+  let ok=false, session=null;
+
+  if(selectedRole==="client" && email==="cliente@demo.cl" && password==="demo123"){
+    ok=true; session={role:"client",name:"Cliente Demo",email};
+  }
+  if(selectedRole==="admin" && email==="admin@tallermanos.cl" && password==="admin123"){
+    ok=true; session={role:"admin",name:"Taller Manos",email};
+  }
+
+  if(!ok){
+    document.getElementById("loginMsg").innerHTML='<div class="notice" style="background:var(--red-soft);color:var(--red)">Correo o contraseña incorrectos para el rol seleccionado.</div>';
+    return;
+  }
+
+  localStorage.setItem("interconectaSession",JSON.stringify(session));
+  applySession(session);
+}
+
+function applySession(session){
+  document.getElementById("sessionName").textContent=session.name;
+  document.getElementById("sessionRole").textContent=session.role==="admin"?"Administrador":"Cliente";
+  document.getElementById("sessionAvatar").textContent=session.role==="admin"?"TM":"C";
+  if(session.role==="admin") showView("org");
+  else showView("user");
+}
+
+function logout(){
+  localStorage.removeItem("interconectaSession");
+  document.getElementById("sessionActions").style.display="none";
+  document.getElementById("userView").classList.remove("active");
+  document.getElementById("orgView").classList.remove("active");
+  document.getElementById("authView").classList.add("active");
+  selectRole("client");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function restoreSession(){
+  const raw=localStorage.getItem("interconectaSession");
+  if(!raw) return;
+  try{
+    const session=JSON.parse(raw);
+    if(session && (session.role==="client" || session.role==="admin")) applySession(session);
+  }catch(e){
+    localStorage.removeItem("interconectaSession");
+  }
+}
+
 const seed={
   orgs:[
     {id:"taller_manos",name:"Taller Manos"},
@@ -325,8 +463,10 @@ function used(a){return activeBookings(a.id).reduce((sum,b)=>sum+b.qty,0)}
 function free(a){return Math.max(0,a.capacity-used(a))}
 function money(n){return n===0?"Gratis":"$"+Number(n).toLocaleString("es-CL")}
 function showView(v){
+  document.getElementById("authView").classList.remove("active");
   document.getElementById("userView").classList.toggle("active",v==="user");
   document.getElementById("orgView").classList.toggle("active",v==="org");
+  document.getElementById("sessionActions").style.display="flex";
   if(v==="org") updateOrg();
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -373,7 +513,7 @@ function reserve(id){
   if(!name||!email){document.getElementById("reserveMsg").innerHTML='<div class="notice" style="background:var(--red-soft);color:var(--red)">Completa nombre y correo.</div>';return}
   if(free(a)<qty){document.getElementById("reserveMsg").innerHTML='<div class="notice" style="background:var(--red-soft);color:var(--red)">No quedan suficientes cupos.</div>';return}
   s.bookings.push({id:Date.now(),activityId:id,name,email,qty,status:"Confirmada",time:new Date().toLocaleString("es-CL")});
-  save(s);renderUser();updateOrg();
+  save(s);renderUser();updateOrg();restoreSession();
   document.getElementById("reserveMsg").innerHTML='<div class="notice">Reserva confirmada.</div>';
 }
 function closeModal(){document.getElementById("modal").classList.remove("open")}
@@ -413,10 +553,10 @@ function hideCreate(){document.getElementById("createPanel").style.display="none
 function createActivity(){
   const s=getState(),id=Math.max(...s.activities.map(a=>a.id))+1;
   s.activities.push({id,org:ORG_ID,title:document.getElementById("cTitle").value.trim(),cat:document.getElementById("cCat").value,date:document.getElementById("cDate").value,time:document.getElementById("cTime").value,area:document.getElementById("cArea").value,price:Number(document.getElementById("cPrice").value||0),capacity:Number(document.getElementById("cCapacity").value||1),desc:document.getElementById("cDesc").value,tone:"t5"});
-  save(s);renderUser();updateOrg();
+  save(s);renderUser();updateOrg();restoreSession();
   document.getElementById("createMsg").innerHTML='<div class="notice">Actividad publicada correctamente.</div>';
 }
-renderUser();updateOrg();
+renderUser();updateOrg();restoreSession();
 </script>
 </body>
 </html>
