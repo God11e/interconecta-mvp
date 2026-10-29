@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f2f2a">
+<title>InterConecta</title>
+<style>
+:root{
+  --bg:#f7f6f1;
+  --surface:#ffffff;
+  --surface-2:#f1f2ed;
+  --text:#17211f;
+  --muted:#66706d;
+  --line:#e2e5df;
+  --brand:#0f2f2a;
+  --brand-2:#17483f;
+  --accent:#ff6c4c;
+  --accent-2:#f3b84b;
+  --success:#24765e;
+  --danger:#b84b3a;
+  --shadow:0 1px 2px rgba(23,33,31,.04),0 12px 32px rgba(23,33,31,.06);
+  --shadow-lg:0 18px 55px rgba(15,47,42,.12);
+  --radius:18px;
+  --radius-sm:12px;
+  --max:1240px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{text-decoration:none;color:inherit}
+.hidden{display:none!important}
+.container{max-width:var(--max);margin:0 auto;padding:0 24px}
+.topbar{
+  position:sticky;top:0;z-index:60;
+  background:rgba(247,246,241,.92);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(23,33,31,.08);
+}
+.nav{
+  min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:18px
+}
+.brand{
+  display:flex;align-items:center;gap:11px;font-size:23px;font-weight:850;letter-spacing:-.035em
+}
+.brand-mark{
+  width:38px;height:38px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;
+  font-size:13px;font-weight:900;letter-spacing:.02em
+}
+.brand strong{color:var(--brand)}
+.nav-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{
+  border:1px solid transparent;border-radius:11px;padding:10px 14px;font-weight:750;
+  background:#fff;color:var(--text);transition:.18s ease
+}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-outline{border-color:var(--line);background:#fff}
+.btn-soft{background:#eef3f1;color:var(--brand)}
+.btn-danger{background:#fff0ed;color:var(--danger)}
+.icon-btn{
+  width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-size:18px
+}
+.user-chip{
+  display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid var(--line);background:#fff;border-radius:12px
+}
+.avatar{
+  width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:#e8efec;color:var(--brand);font-weight:850;font-size:12px
+}
+
+/* AUTH */
+.auth-view{
+  min-height:calc(100vh - 73px);
+  display:grid;grid-template-columns:1.05fr .95fr;
+}
+.auth-visual{
+  background:var(--brand);color:#fff;padding:64px;display:flex;flex-direction:column;justify-content:space-between;min-height:calc(100vh - 73px)
+}
+.auth-visual h1{font-size:58px;line-height:.98;letter-spacing:-.055em;max-width:700px;margin:14px 0}
+.auth-visual p{font-size:18px;line-height:1.6;color:rgba(255,255,255,.78);max-width:590px}
+.auth-mosaic{display:grid;grid-template-columns:1.2fr .8fr;gap:12px;max-width:600px}
+.mosaic-card{
+  min-height:150px;border-radius:18px;padding:18px;display:flex;align-items:flex-end;overflow:hidden;position:relative;
+  background:#214d44;border:1px solid rgba(255,255,255,.08)
+}
+.mosaic-card.alt{background:#d96b50}.mosaic-card.alt2{background:#c7a55d}
+.mosaic-card b{position:relative;z-index:1;font-size:18px}
+.auth-pane{display:grid;place-items:center;padding:46px 24px}
+.auth-card{width:min(460px,100%)}
+.auth-card h2{font-size:34px;letter-spacing:-.04em;margin:0 0 8px}
+.auth-card>p{margin:0 0 22px;color:var(--muted);line-height:1.55}
+.role-tabs{
+  display:grid;grid-template-columns:1fr 1fr;padding:4px;background:#eceeea;border-radius:12px;margin-bottom:18px
+}
+.role-tabs button{border:0;background:transparent;padding:10px;border-radius:9px;font-weight:800;color:var(--muted)}
+.role-tabs button.active{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.form{display:grid;gap:12px}
+.field label{display:block;font-size:12px;font-weight:800;color:#52605d;margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:#fff;outline:none;color:var(--text)
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#9aaba5;box-shadow:0 0 0 3px rgba(15,47,42,.06)}
+.auth-demo{
+  margin-top:16px;padding:12px 14px;border-radius:10px;background:#f1f3ef;border:1px solid var(--line);font-size:13px;color:var(--muted);line-height:1.55
+}
+
+/* CLIENT */
+.client-view{padding:30px 0 70px}
+.client-nav{
+  display:flex;gap:6px;align-items:center;flex-wrap:wrap
+}
+.client-nav button{
+  border:0;background:transparent;padding:9px 11px;border-radius:9px;font-weight:750;color:var(--muted)
+}
+.client-nav button.active,.client-nav button:hover{background:#eceeea;color:var(--text)}
+.hero{
+  background:var(--brand);color:#fff;border-radius:26px;padding:42px;
+  display:grid;grid-template-columns:1.15fr .85fr;gap:36px;align-items:center;
+  box-shadow:var(--shadow-lg);overflow:hidden;position:relative
+}
+.hero:after{
+  content:"";position:absolute;width:460px;height:460px;border-radius:50%;right:-160px;top:-220px;
+  border:1px solid rgba(255,255,255,.12)
+}
+.hero-copy{position:relative;z-index:2}
+.eyebrow{font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.09em;color:#b9d8d0}
+.hero h1{font-size:56px;line-height:.98;letter-spacing:-.055em;margin:10px 0 16px}
+.hero p{color:rgba(255,255,255,.76);font-size:18px;line-height:1.6;margin:0}
+.hero-side{position:relative;z-index:2}
+.mini-event{
+  background:#fff;color:var(--text);border-radius:16px;padding:15px;margin:10px 0;display:flex;justify-content:space-between;gap:12px;align-items:center
+}
+.mini-event small{color:var(--muted)}
+.search-panel{
+  margin:-22px auto 32px;position:relative;z-index:5;max-width:1100px;background:#fff;border:1px solid var(--line);
+  box-shadow:var(--shadow-lg);border-radius:16px;padding:12px;display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr auto;gap:8px
+}
+.category-row{display:flex;gap:9px;overflow:auto;padding:4px 0 18px;scrollbar-width:none}
+.cat-btn{
+  white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:999px;font-weight:750;color:#52605d
+}
+.cat-btn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:22px 0 16px}
+.section-head h2{margin:0;font-size:30px;letter-spacing:-.035em}
+.section-head p{margin:5px 0 0;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.event-card{
+  background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);transition:.2s ease
+}
+.event-card:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(23,33,31,.09)}
+.event-media{
+  height:190px;position:relative;padding:14px;display:flex;align-items:flex-end;color:#fff;overflow:hidden
+}
+.media-1{background:linear-gradient(135deg,#b96a50,#e5ae6d)}
+.media-2{background:linear-gradient(135deg,#395b55,#7db8a7)}
+.media-3{background:linear-gradient(135deg,#5f5277,#b29dbb)}
+.media-4{background:linear-gradient(135deg,#314d69,#88a6c3)}
+.media-5{background:linear-gradient(135deg,#8a6b3b,#d5bd83)}
+.media-6{background:linear-gradient(135deg,#73494c,#c4857c)}
+.event-media:after{
+  content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.42))
+}
+.event-media h3{position:relative;z-index:1;margin:0;font-size:22px;letter-spacing:-.03em}
+.favorite{
+  position:absolute;z-index:2;top:12px;right:12px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#6a6f72;font-size:18px
+}
+.favorite.on{color:#d85042}
+.event-body{padding:16px}
+.event-meta{font-size:13px;color:var(--muted);margin-bottom:7px}
+.event-desc{font-size:14px;line-height:1.5;color:var(--muted);min-height:42px}
+.tags{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0}
+.tag{font-size:11px;font-weight:800;padding:6px 8px;border-radius:999px;background:#f1f3ef;color:#5a6461}
+.event-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px}
+.price{font-size:18px;font-weight:850}
+.avail{font-size:12px;font-weight:800;color:var(--success)}
+.empty{
+  background:#fff;border:1px dashed #cfd4ce;border-radius:14px;padding:34px;text-align:center;color:var(--muted)
+}
+.content-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}
+.side-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.side-panel h3{margin:0 0 10px}
+.booking-item{
+  padding:13px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center
+}
+.booking-item:last-child{border-bottom:0}
+
+/* ORGANIZER */
+.org-view{min-height:calc(100vh - 73px);display:grid;grid-template-columns:246px 1fr}
+.sidebar{
+  background:#fff;border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:73px;height:calc(100vh - 73px)
+}
+.org-id{padding:0 10px 18px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.org-id strong{display:block;font-size:16px}.org-id span{font-size:12px;color:var(--muted)}
+.side-menu{display:grid;gap:3px}
+.side-menu button{
+  border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:9px;font-weight:720;color:#515a57
+}
+.side-menu button.active,.side-menu button:hover{background:#eef1ee;color:var(--text)}
+.org-main{padding:30px 32px 70px;max-width:1180px;width:100%}
+.org-header{display:flex;justify-content:space-between;align-items:start;gap:18px;margin-bottom:22px}
+.org-header h1{font-size:32px;letter-spacing:-.04em;margin:0}
+.org-header p{margin:6px 0 0;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:var(--shadow)
+}
+.kpi small{display:block;color:var(--muted);font-weight:700}
+.kpi strong{display:block;font-size:29px;margin-top:8px;letter-spacing:-.04em}
+.kpi .delta{font-size:11px;color:var(--success);margin-top:6px;font-weight:800}
+.block{background:#fff;border:1px solid var(--line);border-radius:14px;margin-top:16px;box-shadow:var(--shadow);overflow:hidden}
+.block-head{padding:15px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.block-head h2{margin:0;font-size:18px}
+.block-body{padding:17px}
+.dashboard-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:16px}
+.chart{height:180px;display:flex;align-items:flex-end;gap:12px;padding-top:12px}
+.bar-wrap{flex:1;text-align:center}
+.bar{width:100%;border-radius:8px 8px 3px 3px;background:#b9d7cf;min-height:8px}
+.bar-wrap small{display:block;font-size:10px;color:var(--muted);margin-top:6px}
+.activity-row{
+  display:grid;grid-template-columns:1.4fr .7fr .55fr .55fr auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)
+}
+.activity-row:last-child{border-bottom:0}
+.activity-title{font-weight:800}
+.sub{font-size:12px;color:var(--muted);margin-top:4px}
+.status{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:850}
+.status.ok{background:#eaf5f1;color:var(--success)}
+.status.warn{background:#fff4df;color:#966318}
+.status.cancel{background:#fff0ed;color:var(--danger)}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.notice{margin-top:12px;padding:12px 14px;border-radius:10px;background:#edf6f2;color:var(--success);font-weight:750}
+.orgtab{display:none}.orgtab.active{display:block}
+
+/* MODAL */
+.modal-backdrop{
+  display:none;position:fixed;inset:0;z-index:100;background:rgba(9,15,14,.55);align-items:center;justify-content:center;padding:18px
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  width:min(680px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 30px 100px rgba(0,0,0,.25)
+}
+.modal-head{padding:17px 19px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.modal-body{padding:20px}
+.modal-hero{height:210px;border-radius:14px;margin-bottom:16px;display:flex;align-items:flex-end;padding:18px;color:#fff}
+.modal-hero h2{margin:0;font-size:30px;letter-spacing:-.04em}
+.footer{max-width:var(--max);margin:32px auto 0;padding:22px 24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media(max-width:1020px){
+  .auth-view,.hero,.org-view,.content-grid,.dashboard-grid{grid-template-columns:1fr}
+  .auth-visual{min-height:auto;padding:42px}
+  .auth-mosaic{display:none}
+  .search-panel{grid-template-columns:1fr 1fr}
+  .cards{grid-template-columns:1fr 1fr}
+  .sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .side-menu{grid-template-columns:repeat(4,1fr)}
+  .org-id{display:none}
+  .kpis{grid-template-columns:1fr 1fr}
+  .org-main{padding:24px}
+}
+@media(max-width:640px){
+  .hero{padding:28px}.hero h1{font-size:40px}
+  .search-panel,.cards,.kpis,.formgrid{grid-template-columns:1fr}
+  .side-menu{grid-template-columns:1fr 1fr}
+  .auth-visual h1{font-size:42px}
+  .activity-row{grid-template-columns:1fr auto}
+  .activity-row>div:nth-child(2),.activity-row>div:nth-child(3),.activity-row>div:nth-child(4){display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container nav">
+    <div class="brand"><div class="brand-mark">IC</div><span>Inter<strong>Conecta</strong></span></div>
+    <div id="clientNavWrap" class="client-nav hidden">
+      <button class="active" data-clienttab="explore" onclick="openClientTab('explore',this)">Explorar</button>
+      <button data-clienttab="saved" onclick="openClientTab('saved',this)">Guardados</button>
+      <button data-clienttab="bookings" onclick="openClientTab('bookings',this)">Mis reservas</button>
+    </div>
+    <div id="sessionArea" class="nav-right hidden">
+      <div class="user-chip">
+        <div class="avatar" id="avatar">U</div>
+        <div><strong id="sessionName" style="font-size:13px">Usuario</strong><div id="sessionRole" style="font-size:11px;color:var(--muted)">Cliente</div></div>
+      </div>
+      <button class="btn btn-outline" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<!-- AUTH -->
+<section id="authView" class="auth-view">
+  <div class="auth-visual">
+    <div>
+      <div style="font-size:13px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#b9d8d0">Del scroll al panorama</div>
+      <h1>Encuentra tu próxima experiencia. O haz crecer la que tú organizas.</h1>
+      <p>Una plataforma para descubrir actividades presenciales y para que pequeños organizadores gestionen reservas, cupos y participantes desde un solo lugar.</p>
+    </div>
+    <div class="auth-mosaic">
+      <div class="mosaic-card"><b>Talleres creativos</b></div>
+      <div class="mosaic-card alt"><b>Encuentros y experiencias</b></div>
+      <div class="mosaic-card alt2"><b>Actividades para ir solo o acompañado</b></div>
+      <div class="mosaic-card"><b>Reservas simples</b></div>
+    </div>
+  </div>
+  <div class="auth-pane">
+    <div class="auth-card">
+      <h2>Bienvenido a InterConecta</h2>
+      <p>Elige cómo quieres entrar. Cada rol tiene una experiencia completamente separada.</p>
+      <div class="role-tabs">
+        <button id="clientRoleBtn" class="active" onclick="selectRole('client')">Soy cliente</button>
+        <button id="adminRoleBtn" onclick="selectRole('admin')">Administro un local</button>
+      </div>
+      <div class="form">
+        <div class="field"><label>Correo</label><input id="loginEmail" type="email" value="cliente@demo.cl"></div>
+        <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" value="demo123"></div>
+        <button class="btn btn-primary" style="width:100%;padding:13px" onclick="login()">Entrar</button>
+      </div>
+      <div id="authDemo" class="auth-demo"><strong>Demo cliente</strong><br>cliente@demo.cl · demo123</div>
+      <div id="loginMsg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENT -->
+<section id="clientView" class="client-view hidden">
+  <div class="container">
+    <div id="client-explore" class="clienttab">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">Santiago se mueve</div>
+          <h1>Haz algo distinto esta semana.</h1>
+          <p>Descubre talleres, encuentros y experiencias presenciales con información clara, cupos reales y reserva simple.</p>
+        </div>
+        <div class="hero-side">
+          <div style="font-size:13px;font-weight:800;color:#b9d8d0;margin-bottom:10px">Esta semana</div>
+          <div class="mini-event"><div><strong>Taller de cerámica</strong><br><small>Hoy · Providencia</small></div><b>4 cupos</b></div>
+          <div class="mini-event"><div><strong>Noche de juegos</strong><br><small>Mañana · Ñuñoa</small></div><b>8 cupos</b></div>
+          <div class="mini-event"><div><strong>Cata artesanal</strong><br><small>Miércoles · San Miguel</small></div><b>6 cupos</b></div>
+        </div>
+      </section>
+
+      <div class="search-panel">
+        <div class="field"><label>¿Cuándo?</label><select id="fDate"><option value="">Cualquier día</option><option>Hoy</option><option>Mañana</option><option>Esta semana</option></select></div>
+        <div class="field"><label>Zona</label><select id="fArea"><option value="">Todas</option><option>Providencia</option><option>Ñuñoa</option><option>San Miguel</option><option>Santiago Centro</option></select></div>
+        <div class="field"><label>Presupuesto</label><select id="fBudget"><option value="">Cualquiera</option><option value="0">Gratis</option><option value="10000">Hasta $10.000</option><option value="20000">Hasta $20.000</option></select></div>
+        <div class="field"><label>Ir...</label><select id="fSolo"><option value="">Como sea</option><option value="solo">Apto para ir solo</option><option value="grupo">En grupo</option></select></div>
+        <button class="btn btn-accent" onclick="renderEvents()">Buscar</button>
+      </div>
+
+      <div class="category-row">
+        <button class="cat-btn active" data-cat="" onclick="chooseCategory('',this)">Todos</button>
+        <button class="cat-btn" data-cat="Taller" onclick="chooseCategory('Taller',this)">Talleres</button>
+        <button class="cat-btn" data-cat="Gastronomía" onclick="chooseCategory('Gastronomía',this)">Gastronomía</button>
+        <button class="cat-btn" data-cat="Social" onclick="chooseCategory('Social',this)">Social</button>
+        <button class="cat-btn" data-cat="Deporte" onclick="chooseCategory('Deporte',this)">Deporte</button>
+        <button class="cat-btn" data-cat="Cultura" onclick="chooseCategory('Cultura',this)">Cultura</button>
+      </div>
+
+      <div class="section-head">
+        <div><h2>Recomendados para ti</h2><p>Experiencias claras, acotadas y fáciles de concretar.</p></div>
+        <span id="eventCount" style="font-size:13px;color:var(--muted)"></span>
+      </div>
+      <div class="cards" id="eventGrid"></div>
+    </div>
+
+    <div id="client-saved" class="clienttab hidden">
+      <div class="section-head"><div><h2>Guardados</h2><p>Actividades que marcaste para revisar después.</p></div></div>
+      <div class="cards" id="savedGrid"></div>
+    </div>
+
+    <div id="client-bookings" class="clienttab hidden">
+      <div class="section-head"><div><h2>Mis reservas</h2><p>Administra tus próximas actividades.</p></div></div>
+      <div class="content-grid">
+        <div id="clientBookingsList"></div>
+        <aside class="side-panel">
+          <h3>Tu actividad</h3>
+          <p style="color:var(--muted);line-height:1.6">Desde aquí puedes revisar tus reservas, cancelarlas y explorar otras experiencias sin mezclar información administrativa de los locales.</p>
+        </aside>
+      </div>
+    </div>
+  </div>
+  <div class="footer">InterConecta · Santiago · 2026</div>
+</section>
+
+<!-- ORGANIZER -->
+<section id="orgView" class="org-view hidden">
+  <aside class="sidebar">
+    <div class="org-id"><strong>Taller Manos</strong><span>Panel del organizador</span></div>
+    <div class="side-menu">
+      <button class="active" onclick="openOrgTab('overview',this)">Resumen</button>
+      <button onclick="openOrgTab('activities',this)">Actividades</button>
+      <button onclick="openOrgTab('reservations',this)">Reservas</button>
+      <button onclick="openOrgTab('waitlist',this)">Lista de espera</button>
+      <button onclick="openOrgTab('analytics',this)">Analítica</button>
+      <button onclick="openOrgTab('settings',this)">Configuración</button>
+    </div>
+  </aside>
+
+  <main class="org-main">
+    <div id="org-overview" class="orgtab active">
+      <div class="org-header">
+        <div><h1>Buenos días, Taller Manos</h1><p>Esto es lo que está pasando en tu negocio.</p></div>
+        <button class="btn btn-primary" onclick="openOrgTab('activities');showCreateForm()">Nueva actividad</button>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><small>Reservas confirmadas</small><strong id="kBookings">0</strong><div class="delta">Actualizado ahora</div></div>
+        <div class="kpi"><small>Ocupación</small><strong id="kOccupancy">0%</strong><div class="delta">Cupos vendidos / ofrecidos</div></div>
+        <div class="kpi"><small>Actividades activas</small><strong id="kActivities">0</strong><div class="delta">Solo de tu local</div></div>
+        <div class="kpi"><small>Lista de espera</small><strong id="kWaitlist">0</strong><div class="delta">Interesados pendientes</div></div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="block">
+          <div class="block-head"><h2>Reservas de la semana</h2><span style="font-size:12px;color:var(--muted)">Últimos 7 días</span></div>
+          <div class="block-body">
+            <div class="chart" id="bookingChart"></div>
+          </div>
+        </div>
+        <div class="block">
+          <div class="block-head"><h2>Próxima sesión</h2></div>
+          <div class="block-body" id="nextSession"></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-head"><h2>Tus actividades</h2><button class="btn btn-outline" onclick="openOrgTab('activities')">Gestionar</button></div>
+        <div class="block-body" id="overviewActivities"></div>
+      </div>
+    </div>
+
+    <div id="org-activities" class="orgtab">
+      <div class="org-header">
+        <div><h1>Actividades</h1><p>Crea, edita y controla la capacidad de tus propias experiencias.</p></div>
+        <button class="btn btn-primary" onclick="showCreateForm()">Nueva actividad</button>
+      </div>
+      <div id="createForm" class="block hidden">
+        <div class="block-head"><h2>Crear actividad</h2><button class="btn btn-outline" onclick="hideCreateForm()">Cerrar</button></div>
+        <div class="block-body">
+          <div class="formgrid">
+            <div class="field"><label>Nombre</label><input id="cTitle" value="Taller de velas"></div>
+            <div class="field"><label>Categoría</label><select id="cCat"><option>Taller</option><option>Social</option><option>Gastronomía</option><option>Cultura</option></select></div>
+            <div class="field"><label>Fecha</label><select id="cDate"><option>Hoy</option><option>Mañana</option><option>Esta semana</option></select></div>
+            <div class="field"><label>Hora</label><input id="cTime" value="19:30"></div>
+            <div class="field"><label>Zona</label><select id="cArea"><option>Providencia</option><option>Ñuñoa</option><option>San Miguel</option></select></div>
+            <div class="field"><label>Precio</label><input id="cPrice" type="number" value="9000"></div>
+            <div class="field"><label>Cupos</label><input id="cCapacity" type="number" value="12"></div>
+            <div class="field"><label>Modalidad</label><select id="cMode"><option value="solo">Apto para ir solo</option><option value="grupo">Orientado a grupos</option></select></div>
+          </div>
+          <div class="field" style="margin-top:12px"><label>Descripción</label><textarea id="cDesc" rows="4">Actividad creativa para principiantes, con materiales incluidos.</textarea></div>
+          <button class="btn btn-primary" style="margin-top:12px" onclick="createActivity()">Publicar actividad</button>
+          <div id="createMsg"></div>
+        </div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2>Publicadas</h2></div>
+        <div class="block-body" id="activitiesList"></div>
+      </div>
+    </div>
+
+    <div id="org-reservations" class="orgtab">
+      <div class="org-header"><div><h1>Reservas</h1><p>Personas inscritas únicamente en las actividades de Taller Manos.</p></div></div>
+      <div class="block"><div class="block-body tablewrap" id="reservationsTable"></div></div>
+    </div>
+
+    <div id="org-waitlist" class="orgtab">
+      <div class="org-header"><div><h1>Lista de espera</h1><p>Interesados que esperan un cupo en tus actividades completas.</p></div></div>
+      <div class="block"><div class="block-body" id="waitlistList"></div></div>
+    </div>
+
+    <div id="org-analytics" class="orgtab">
+      <div class="org-header"><div><h1>Analítica</h1><p>Indicadores para entender demanda y ocupación.</p></div></div>
+      <div class="kpis">
+        <div class="kpi"><small>Cupos ocupados</small><strong id="aOccupied">0</strong></div>
+        <div class="kpi"><small>Cupos libres</small><strong id="aFree">0</strong></div>
+        <div class="kpi"><small>Cancelaciones</small><strong id="aCancels">0</strong></div>
+        <div class="kpi"><small>Actividades</small><strong id="aActivities">0</strong></div>
+      </div>
+      <div class="block"><div class="block-head"><h2>Lectura rápida</h2></div><div class="block-body"><p id="analyticsText" style="margin:0;color:var(--muted);line-height:1.7"></p></div></div>
+    </div>
+
+    <div id="org-settings" class="orgtab">
+      <div class="org-header"><div><h1>Configuración</h1><p>Información básica del local.</p></div></div>
+      <div class="block">
+        <div class="block-body">
+          <div class="formgrid">
+            <div class="field"><label>Nombre comercial</label><input value="Taller Manos"></div>
+            <div class="field"><label>Correo de contacto</label><input value="admin@tallermanos.cl"></div>
+            <div class="field"><label>Comuna principal</label><input value="Providencia"></div>
+            <div class="field"><label>Teléfono</label><input value="+56 9 5555 5555"></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:14px" onclick="alert('Configuración guardada en esta demo.')">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<div id="modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-head"><strong id="modalTitle"></strong><button class="btn btn-outline" onclick="closeModal()">Cerrar</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const ORG_ID="taller_manos";
+let selectedRole="client";
+let selectedCategory="";
+
+const seed={
+  orgs:[
+    {id:"taller_manos",name:"Taller Manos"},
+    {id:"cebada_sur",name:"Cebada Sur"},
+    {id:"mesa_abierta",name:"Mesa Abierta"},
+    {id:"caminantes",name:"Caminantes Santiago"},
+    {id:"casa_papel",name:"Casa Papel"}
+  ],
+  events:[
+    {id:1,org:"taller_manos",title:"Taller de cerámica",cat:"Taller",date:"Hoy",time:"19:00",area:"Providencia",price:8000,capacity:20,mode:"solo",desc:"Una sesión guiada para aprender técnicas básicas y crear tu primera pieza.",media:1},
+    {id:2,org:"taller_manos",title:"Taller de bordado",cat:"Taller",date:"Esta semana",time:"17:00",area:"Ñuñoa",price:7500,capacity:14,mode:"solo",desc:"Bordado para principiantes en un ambiente relajado y de grupos pequeños.",media:5},
+    {id:3,org:"cebada_sur",title:"Cata de cerveza artesanal",cat:"Gastronomía",date:"Hoy",time:"20:30",area:"San Miguel",price:0,capacity:16,mode:"grupo",desc:"Degustación guiada de cervezas locales y conversación con productores.",media:2},
+    {id:4,org:"mesa_abierta",title:"Noche de juegos de mesa",cat:"Social",date:"Mañana",time:"20:00",area:"Ñuñoa",price:5000,capacity:18,mode:"solo",desc:"Mesas guiadas para conocer gente, aprender juegos y pasar una noche distinta.",media:3},
+    {id:5,org:"caminantes",title:"Caminata urbana grupal",cat:"Deporte",date:"Esta semana",time:"10:00",area:"Santiago Centro",price:0,capacity:24,mode:"solo",desc:"Recorrido urbano en grupo con paradas breves y ritmo apto para principiantes.",media:4},
+    {id:6,org:"casa_papel",title:"Encuadernación artesanal",cat:"Cultura",date:"Esta semana",time:"18:30",area:"Providencia",price:12000,capacity:10,mode:"solo",desc:"Aprende a crear una libreta artesanal desde cero y llévatela a casa.",media:6}
+  ],
+  bookings:[],
+  waitlist:[],
+  favorites:[],
+  cancels:0,
+  created:0
+};
+
+function getState(){
+  const raw=localStorage.getItem("interconectaPremium");
+  if(raw) return JSON.parse(raw);
+  localStorage.setItem("interconectaPremium",JSON.stringify(seed));
+  return JSON.parse(JSON.stringify(seed));
+}
+function saveState(s){localStorage.setItem("interconectaPremium",JSON.stringify(s))}
+function orgName(id){const s=getState();return s.orgs.find(o=>o.id===id)?.name||"Organizador"}
+function activeBookings(eventId){return getState().bookings.filter(b=>b.eventId===eventId&&b.status==="Confirmada")}
+function usedSpots(eventId){return activeBookings(eventId).reduce((n,b)=>n+b.qty,0)}
+function available(e){return Math.max(0,e.capacity-usedSpots(e.id))}
+function money(n){return n===0?"Gratis":"$"+Number(n).toLocaleString("es-CL")}
+function currentSession(){try{return JSON.parse(localStorage.getItem("interconectaSessionPremium"))}catch(e){return null}}
+
+function selectRole(role){
+  selectedRole=role;
+  document.getElementById("clientRoleBtn").classList.toggle("active",role==="client");
+  document.getElementById("adminRoleBtn").classList.toggle("active",role==="admin");
+  if(role==="client"){
+    loginEmail.value="cliente@demo.cl"; loginPassword.value="demo123";
+    authDemo.innerHTML="<strong>Demo cliente</strong><br>cliente@demo.cl · demo123";
+  }else{
+    loginEmail.value="admin@tallermanos.cl"; loginPassword.value="admin123";
+    authDemo.innerHTML="<strong>Demo administrador</strong><br>admin@tallermanos.cl · admin123";
+  }
+  loginMsg.innerHTML="";
+}
+
+function login(){
+  const email=loginEmail.value.trim().toLowerCase(), password=loginPassword.value;
+  let session=null;
+  if(selectedRole==="client"&&email==="cliente@demo.cl"&&password==="demo123") session={role:"client",name:"Cliente Demo",email};
+  if(selectedRole==="admin"&&email==="admin@tallermanos.cl"&&password==="admin123") session={role:"admin",name:"Taller Manos",email};
+  if(!session){
+    loginMsg.innerHTML='<div class="notice" style="background:#fff0ed;color:var(--danger)">Correo o contraseña incorrectos para el rol seleccionado.</div>';return;
+  }
+  localStorage.setItem("interconectaSessionPremium",JSON.stringify(session));
+  applySession(session);
+}
+function applySession(session){
+  authView.classList.add("hidden");
+  sessionArea.classList.remove("hidden");
+  sessionName.textContent=session.name;
+  sessionRole.textContent=session.role==="admin"?"Administrador":"Cliente";
+  avatar.textContent=session.role==="admin"?"TM":"C";
+  if(session.role==="admin"){
+    clientView.classList.add("hidden"); orgView.classList.remove("hidden"); clientNavWrap.classList.add("hidden"); updateOrg();
+  }else{
+    orgView.classList.add("hidden"); clientView.classList.remove("hidden"); clientNavWrap.classList.remove("hidden"); renderEvents(); renderSaved(); renderClientBookings();
+  }
+}
+function logout(){
+  localStorage.removeItem("interconectaSessionPremium");
+  sessionArea.classList.add("hidden"); clientNavWrap.classList.add("hidden");
+  clientView.classList.add("hidden"); orgView.classList.add("hidden"); authView.classList.remove("hidden");
+  selectRole("client");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function restoreSession(){const s=currentSession();if(s)applySession(s)}
+
+function openClientTab(name,btn){
+  document.querySelectorAll(".clienttab").forEach(x=>x.classList.add("hidden"));
+  document.getElementById("client-"+name).classList.remove("hidden");
+  document.querySelectorAll("[data-clienttab]").forEach(x=>x.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  if(name==="saved")renderSaved();
+  if(name==="bookings")renderClientBookings();
+}
+function chooseCategory(cat,btn){
+  selectedCategory=cat;
+  document.querySelectorAll(".cat-btn").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderEvents();
+}
+function eventCard(e){
+  const s=getState(),fav=s.favorites.includes(e.id);
+  return `<article class="event-card">
+    <div class="event-media media-${e.media||1}">
+      <button class="favorite ${fav?"on":""}" onclick="toggleFavorite(${e.id},event);return false">${fav?"♥":"♡"}</button>
+      <h3>${e.title}</h3>
+    </div>
+    <div class="event-body">
+      <div class="event-meta">${e.date} · ${e.time} · ${e.area}</div>
+      <div style="font-size:13px;color:var(--muted)">por ${orgName(e.org)}</div>
+      <div class="tags"><span class="tag">${e.cat}</span><span class="tag">${e.mode==="solo"?"Apto para ir solo":"Ideal en grupo"}</span></div>
+      <p class="event-desc">${e.desc}</p>
+      <div class="event-foot">
+        <div><div class="price">${money(e.price)}</div><div class="avail">${available(e)} cupos disponibles</div></div>
+        <button class="btn btn-primary" onclick="openEvent(${e.id})">Ver detalle</button>
+      </div>
+    </div>
+  </article>`;
+}
+function renderEvents(){
+  const s=getState(),date=fDate.value,area=fArea.value,b=fBudget.value,solo=fSolo.value;
+  const arr=s.events.filter(e=>(!date||e.date===date)&&(!area||e.area===area)&&(!selectedCategory||e.cat===selectedCategory)&&(b===""||e.price<=Number(b))&&(!solo||e.mode===solo));
+  eventCount.textContent=arr.length+" experiencias";
+  eventGrid.innerHTML=arr.length?arr.map(eventCard).join(""):'<div class="empty" style="grid-column:1/-1">No encontramos experiencias con esos filtros.</div>';
+}
+function toggleFavorite(id,ev){
+  ev.stopPropagation();const s=getState(),i=s.favorites.indexOf(id);
+  if(i>=0)s.favorites.splice(i,1);else s.favorites.push(id);
+  saveState(s);renderEvents();renderSaved();
+}
+function renderSaved(){
+  const s=getState(),arr=s.events.filter(e=>s.favorites.includes(e.id));
+  savedGrid.innerHTML=arr.length?arr.map(eventCard).join(""):'<div class="empty" style="grid-column:1/-1">Todavía no guardas actividades.</div>';
+}
+function openEvent(id){
+  const s=getState(),e=s.events.find(x=>x.id===id),free=available(e);
+  modalTitle.textContent=e.title;
+  modalBody.innerHTML=`
+    <div class="modal-hero media-${e.media||1}"><h2>${e.title}</h2></div>
+    <div class="event-meta">${e.date} · ${e.time} · ${e.area} · ${orgName(e.org)}</div>
+    <div class="tags"><span class="tag">${e.cat}</span><span class="tag">${e.mode==="solo"?"Apto para ir solo":"Ideal en grupo"}</span></div>
+    <p style="line-height:1.7;color:var(--muted)">${e.desc}</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:14px 0">
+      <div><strong style="font-size:20px">${money(e.price)}</strong><div style="font-size:12px;color:var(--muted)">por persona</div></div>
+      <strong style="color:var(--success)">${free} cupos</strong>
+    </div>
+    ${free>0?`
+      <div class="field"><label>Nombre</label><input id="rName" value="Cliente Demo"></div>
+      <div class="field" style="margin-top:10px"><label>Correo</label><input id="rEmail" value="cliente@demo.cl"></div>
+      <div class="field" style="margin-top:10px"><label>Cupos</label><select id="rQty"><option value="1">1 persona</option><option value="2">2 personas</option></select></div>
+      <button class="btn btn-accent" style="width:100%;margin-top:14px" onclick="reserve(${e.id})">Confirmar reserva</button>
+    `:`
+      <p style="font-weight:800">Esta actividad está completa.</p>
+      <button class="btn btn-primary" style="width:100%" onclick="joinWaitlist(${e.id})">Unirme a la lista de espera</button>
+    `}
+    <div id="modalMsg"></div>`;
+  modal.classList.add("open");
+}
+function closeModal(){modal.classList.remove("open")}
+function reserve(id){
+  const s=getState(),e=s.events.find(x=>x.id===id),name=rName.value.trim(),email=rEmail.value.trim(),qty=Number(rQty.value);
+  if(!name||!email){modalMsg.innerHTML='<div class="notice" style="background:#fff0ed;color:var(--danger)">Completa tus datos.</div>';return}
+  if(available(e)<qty){modalMsg.innerHTML='<div class="notice" style="background:#fff0ed;color:var(--danger)">No quedan suficientes cupos.</div>';return}
+  s.bookings.push({id:Date.now(),eventId:id,name,email,qty,status:"Confirmada",created:new Date().toLocaleString("es-CL")});
+  saveState(s);renderEvents();renderClientBookings();updateOrg();
+  modalMsg.innerHTML='<div class="notice">Reserva confirmada. Ya aparece en “Mis reservas”.</div>';
+}
+function joinWaitlist(id){
+  const s=getState();
+  if(!s.waitlist.some(w=>w.eventId===id&&w.email==="cliente@demo.cl")) s.waitlist.push({id:Date.now(),eventId:id,name:"Cliente Demo",email:"cliente@demo.cl",created:new Date().toLocaleString("es-CL")});
+  saveState(s);updateOrg();modalMsg.innerHTML='<div class="notice">Te agregamos a la lista de espera.</div>';
+}
+function renderClientBookings(){
+  const s=getState(),arr=s.bookings.filter(b=>b.email==="cliente@demo.cl");
+  clientBookingsList.innerHTML=arr.length?arr.map(b=>{
+    const e=s.events.find(x=>x.id===b.eventId);
+    return `<div class="side-panel" style="margin-bottom:12px">
+      <div class="booking-item">
+        <div><strong>${e?.title||"Actividad"}</strong><div class="sub">${e?.date||""} · ${e?.time||""} · ${e?.area||""}</div></div>
+        <span class="status ${b.status==="Confirmada"?"ok":"cancel"}">${b.status}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px">
+        <span style="color:var(--muted);font-size:13px">${b.qty} cupo(s)</span>
+        ${b.status==="Confirmada"?`<button class="btn btn-danger" onclick="cancelBooking(${b.id})">Cancelar</button>`:""}
+      </div>
+    </div>`
+  }).join(""):'<div class="empty">Aún no tienes reservas.</div>';
+}
+function cancelBooking(id){
+  const s=getState(),b=s.bookings.find(x=>x.id===id);
+  if(b&&b.status==="Confirmada"){b.status="Cancelada";s.cancels++;saveState(s)}
+  renderClientBookings();renderEvents();updateOrg();
+}
+
+function openOrgTab(name,btn){
+  document.querySelectorAll(".orgtab").forEach(x=>x.classList.remove("active"));
+  document.getElementById("org-"+name).classList.add("active");
+  if(btn){document.querySelectorAll(".side-menu button").forEach(x=>x.classList.remove("active"));btn.classList.add("active")}
+  updateOrg();
+}
+function myEvents(){return getState().events.filter(e=>e.org===ORG_ID)}
+function myBookings(){const ids=new Set(myEvents().map(e=>e.id));return getState().bookings.filter(b=>ids.has(b.eventId))}
+function myWaitlist(){const ids=new Set(myEvents().map(e=>e.id));return getState().waitlist.filter(w=>ids.has(w.eventId))}
+function updateOrg(){
+  const s=getState(),events=myEvents(),bookings=myBookings(),active=bookings.filter(b=>b.status==="Confirmada"),wait=myWaitlist();
+  const capacity=events.reduce((n,e)=>n+e.capacity,0),occupied=active.reduce((n,b)=>n+b.qty,0),free=Math.max(0,capacity-occupied),occ=capacity?Math.round(occupied/capacity*100):0;
+  kBookings.textContent=active.length;kOccupancy.textContent=occ+"%";kActivities.textContent=events.length;kWaitlist.textContent=wait.length;
+  aOccupied.textContent=occupied;aFree.textContent=free;aCancels.textContent=bookings.filter(b=>b.status==="Cancelada").length;aActivities.textContent=events.length;
+  analyticsText.textContent=`Tus actividades tienen ${occupied} cupos ocupados de ${capacity} disponibles (${occ}% de ocupación). Hay ${free} cupos libres y ${wait.length} personas en lista de espera.`;
+  const rows=events.map(e=>`<div class="activity-row">
+    <div><div class="activity-title">${e.title}</div><div class="sub">${e.date} · ${e.time} · ${e.area}</div></div>
+    <div><span class="status ok">Publicada</span></div>
+    <div><strong>${usedSpots(e.id)}/${e.capacity}</strong><div class="sub">ocupados</div></div>
+    <div><strong>${money(e.price)}</strong></div>
+    <button class="btn btn-outline" onclick="openEvent(${e.id})">Ver</button>
+  </div>`).join("");
+  overviewActivities.innerHTML=rows||'<div class="empty">No hay actividades.</div>';
+  activitiesList.innerHTML=rows||'<div class="empty">No hay actividades.</div>';
+  const next=events[0];
+  nextSession.innerHTML=next?`<strong style="font-size:20px">${next.title}</strong><p style="color:var(--muted)">${next.date} · ${next.time} · ${next.area}</p><div class="tags"><span class="tag">${usedSpots(next.id)} reservas</span><span class="tag">${available(next)} cupos libres</span></div>`:'<div class="empty">Sin próximas sesiones.</div>';
+  bookingChart.innerHTML=[3,5,4,8,6,10,7].map((v,i)=>`<div class="bar-wrap"><div class="bar" style="height:${v*13}px"></div><small>${["L","M","X","J","V","S","D"][i]}</small></div>`).join("");
+  if(!bookings.length)reservationsTable.innerHTML='<div class="empty">Aún no hay reservas.</div>';
+  else reservationsTable.innerHTML=`<table><thead><tr><th>Participante</th><th>Actividad</th><th>Cupos</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>${bookings.map(b=>{const e=s.events.find(x=>x.id===b.eventId);return `<tr><td>${b.name}</td><td>${e?.title||"-"}</td><td>${b.qty}</td><td><span class="status ${b.status==="Confirmada"?"ok":"cancel"}">${b.status}</span></td><td>${b.created}</td></tr>`}).join("")}</tbody></table>`;
+  waitlistList.innerHTML=wait.length?wait.map(w=>{const e=s.events.find(x=>x.id===w.eventId);return `<div class="booking-item"><div><strong>${w.name}</strong><div class="sub">${e?.title||"-"} · ${w.email}</div></div><span class="status warn">En espera</span></div>`}).join(""):'<div class="empty">No hay personas en lista de espera.</div>';
+}
+function showCreateForm(){createForm.classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"})}
+function hideCreateForm(){createForm.classList.add("hidden")}
+function createActivity(){
+  const s=getState(),id=Math.max(...s.events.map(e=>e.id))+1;
+  s.events.push({id,org:ORG_ID,title:cTitle.value.trim(),cat:cCat.value,date:cDate.value,time:cTime.value,area:cArea.value,price:Number(cPrice.value||0),capacity:Number(cCapacity.value||1),mode:cMode.value,desc:cDesc.value,media:((id-1)%6)+1});
+  s.created++;saveState(s);createMsg.innerHTML='<div class="notice">Actividad publicada. Ya está disponible para los clientes.</div>';updateOrg();renderEvents();
+}
+
+restoreSession();
+</script>
+</body>
+</html>
