@@ -408,6 +408,23 @@ function activeBookings(eventId){return state().bookings.filter(b=>b.eventId===e
 function used(eventId){return activeBookings(eventId).reduce((n,b)=>n+b.qty,0)}
 function free(e){return Math.max(0,e.capacity-used(e.id))}
 function money(n){return n===0?"Gratis":"$"+Number(n).toLocaleString("es-CL")}
+function reservationTarget(){
+  const params=new URLSearchParams(location.search);
+  const q=params.get("reserva");
+  if(q && /^\d+$/.test(q)) return Number(q);
+  const h=location.hash.match(/^#reserva-(\d+)/);
+  return h?Number(h[1]):null;
+}
+function activityTarget(){
+  const h=location.hash.match(/^#actividad-(\d+)/);
+  return h?Number(h[1]):null;
+}
+function clearReservationQuery(){
+  const url=new URL(location.href);
+  url.searchParams.delete("reserva");
+  history.replaceState({}, "", url.pathname+url.search+url.hash);
+}
+
 function orgEvents(){return state().events.filter(e=>e.org===ORG_ID)}
 function orgBookings(){const ids=new Set(orgEvents().map(e=>e.id));return state().bookings.filter(b=>ids.has(b.eventId))}
 function orgWait(){const ids=new Set(orgEvents().map(e=>e.id));return state().waitlist.filter(w=>ids.has(w.eventId))}
@@ -454,7 +471,7 @@ function cancelBooking(id){const s=state(),b=s.bookings.find(x=>x.id===id);if(b&
 function joinWait(id){const s=state();if(!s.waitlist.some(w=>w.eventId===id&&w.email==="cliente@demo.cl"))s.waitlist.push({id:Date.now(),eventId:id,name:"Cliente Demo",email:"cliente@demo.cl",created:new Date().toLocaleString("es-CL")});save(s);alert("Te agregamos a la lista de espera.");updateOrg()}
 
 function openOrgTab(name,btn){document.querySelectorAll(".orgtab").forEach(x=>x.classList.remove("active"));document.getElementById("org-"+name).classList.add("active");if(btn){document.querySelectorAll(".menu button").forEach(x=>x.classList.remove("active"));btn.classList.add("active")}updateOrg();window.scrollTo({top:0,behavior:"smooth"})}
-function activityRow(e){const occ=used(e.id),pct=e.capacity?Math.round(occ/e.capacity*100):0;return `<div class="activity-row"><div><div class="act-title">${e.title}</div><div class="sub">${e.date} · ${e.time} · ${e.area}</div></div><div><span class="status ${e.status==="active"?"ok":e.status==="paused"?"pause":"cancel"}">${e.status==="active"?"Publicada":e.status==="paused"?"Pausada":"Cancelada"}</span></div><div><strong>${occ}/${e.capacity}</strong><div class="sub">cupos</div></div><div><strong>${money(e.price)}</strong></div><div class="quick-actions"><button class="btn btn-primary btn-sm" onclick="shareReservation(${e.id})">Compartir reserva</button><button class="btn btn-outline btn-sm" onclick="editActivity(${e.id})">Editar</button><button class="btn btn-outline btn-sm" onclick="duplicateActivity(${e.id})">Duplicar</button><button class="btn btn-outline btn-sm" onclick="togglePause(${e.id})">${e.status==="paused"?"Reactivar":"Pausar"}</button><button class="btn btn-danger btn-sm" onclick="cancelActivity(${e.id})">Cancelar</button><button class="btn btn-outline btn-sm" onclick="copyOrgLink(${e.id})">Ver enlace</button></div></div>`}
+function activityRow(e){const occ=used(e.id),pct=e.capacity?Math.round(occ/e.capacity*100):0;return `<div class="activity-row"><div><div class="act-title">${e.title}</div><div class="sub">${e.date} · ${e.time} · ${e.area}</div></div><div><span class="status ${e.status==="active"?"ok":e.status==="paused"?"pause":"cancel"}">${e.status==="active"?"Publicada":e.status==="paused"?"Pausada":"Cancelada"}</span></div><div><strong>${occ}/${e.capacity}</strong><div class="sub">cupos</div></div><div><strong>${money(e.price)}</strong></div><div class="quick-actions"><button class="btn btn-primary btn-sm" onclick="shareReservation(${e.id})">Compartir reserva</button><button class="btn btn-outline btn-sm" onclick="editActivity(${e.id})">Editar</button><button class="btn btn-outline btn-sm" onclick="duplicateActivity(${e.id})">Duplicar</button><button class="btn btn-outline btn-sm" onclick="togglePause(${e.id})">${e.status==="paused"?"Reactivar":"Pausar"}</button><button class="btn btn-danger btn-sm" onclick="cancelActivity(${e.id})">Cancelar</button></div></div>`}
 function updateOrg(){const s=state(),ev=orgEvents(),bk=orgBookings(),active=bk.filter(b=>b.status==="Confirmada"),wait=orgWait(),capacity=ev.filter(e=>e.status!=="cancelled").reduce((n,e)=>n+e.capacity,0),occupied=active.reduce((n,b)=>n+b.qty,0),occ=capacity?Math.round(occupied/capacity*100):0,att=active.length?Math.round(active.filter(b=>b.attendance).length/active.length*100):0;
 kBookings.textContent=active.length;kOccupancy.textContent=occ+"%";kCancels.textContent=bk.filter(b=>b.status==="Cancelada").length;kWait.textContent=wait.length;aOccupied.textContent=occupied;aFree.textContent=Math.max(0,capacity-occupied);aAttendance.textContent=att+"%";aActive.textContent=ev.filter(e=>e.status==="active").length;analyticsText.textContent=`Tienes ${occupied} cupos ocupados de ${capacity} disponibles (${occ}% de ocupación). La asistencia registrada es ${att}%. Hay ${wait.length} personas en lista de espera.`;
 overviewActivities.innerHTML=ev.slice(0,3).map(activityRow).join("")||'<div class="empty">Sin actividades.</div>';activitiesList.innerHTML=ev.map(activityRow).join("")||'<div class="empty">Sin actividades.</div>';
@@ -472,14 +489,11 @@ function saveEdit(id){const s=state(),e=s.events.find(x=>x.id===id);e.title=eTit
 function duplicateActivity(id){const s=state(),e=s.events.find(x=>x.id===id),nid=Math.max(...s.events.map(x=>x.id))+1;s.events.push({...e,id:nid,title:e.title+" · copia",status:"paused",media:((nid-1)%6)+1});save(s);updateOrg();renderEvents()}
 function togglePause(id){const s=state(),e=s.events.find(x=>x.id===id);if(e.status==="cancelled")return;e.status=e.status==="paused"?"active":"paused";save(s);updateOrg();renderEvents()}
 function cancelActivity(id){const s=state(),e=s.events.find(x=>x.id===id);if(confirm("¿Cancelar esta actividad?")){e.status="cancelled";save(s);updateOrg();renderEvents()}}
-function copyOrgLink(id){
-  const link=location.origin+location.pathname+"#actividad-"+id;
-  navigator.clipboard?.writeText(link);
-  alert("Enlace de actividad copiado:\n"+link);
-}
+
 async function shareReservation(id){
   const s=state(),e=s.events.find(x=>x.id===id);
-  const link=location.origin+location.pathname+"#reserva-"+id;
+  const base=location.origin+location.pathname;
+  const link=base+"?reserva="+id+"#reserva-"+id;
   const shareData={
     title:e.title+" · InterConecta",
     text:"Reserva tu cupo para "+e.title+" en InterConecta.",
@@ -495,7 +509,10 @@ async function shareReservation(id){
   }
   if(navigator.clipboard){
     await navigator.clipboard.writeText(link);
-    alert("Enlace de reserva copiado.\n\nPuedes pegarlo en WhatsApp, Instagram o correo:\n"+link);
+    alert("Enlace de reserva copiado.
+
+Puedes pegarlo en WhatsApp, Instagram o correo:
+"+link);
   }else{
     prompt("Copia este enlace de reserva:",link);
   }
@@ -507,17 +524,38 @@ function downloadCSV(){const arr=orgBookings(),s=state();let csv="Nombre,Correo,
 
 window.addEventListener("hashchange",()=>{
   const ses=JSON.parse(localStorage.getItem("interconecta20session")||"null");
-  if(ses?.role!=="client") return;
-  const reserveMatch=location.hash.match(/^#reserva-(\d+)/);
-  const activityMatch=location.hash.match(/^#actividad-(\d+)/);
-  if(reserveMatch){
-    const id=Number(reserveMatch[1]);
-    openDetail(id);
-    setTimeout(()=>startBooking(id),150);
-  }else if(activityMatch){
-    openDetail(Number(activityMatch[1]));
+  const reserveId=reservationTarget();
+  const activityId=activityTarget();
+
+  if(reserveId){
+    if(ses?.role==="client"){
+      openDetail(reserveId);
+      setTimeout(()=>startBooking(reserveId),120);
+    }else if(ses?.role==="admin"){
+      localStorage.removeItem("interconecta20session");
+      orgView.classList.add("hidden");
+      sessionArea.classList.add("hidden");
+      authView.classList.remove("hidden");
+      chooseRole("client");
+    }
+    return;
   }
+
+  if(activityId && ses?.role==="client") openDetail(activityId);
 });
+
+// If someone opens a reservation link while an admin session is stored,
+// clear only that session so the link can continue through client login.
+(function prepareReservationEntry(){
+  const reserveId=reservationTarget();
+  if(!reserveId) return;
+  const ses=JSON.parse(localStorage.getItem("interconecta20session")||"null");
+  if(ses?.role==="admin"){
+    localStorage.removeItem("interconecta20session");
+    chooseRole("client");
+  }
+})();
+
 restore();
 </script>
 </body>
