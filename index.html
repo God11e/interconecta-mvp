@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#17352f">
-<title>InterConecta 2.4</title>
+<title>InterConecta 2.5</title>
 <style>
 :root{
   --bg:#f7f6f1;
@@ -274,7 +274,7 @@ th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
 
         <div class="searchbar">
           <div class="field"><label for="fDate">Cuándo</label><select id="fDate"><option value="">Cualquier día</option><option>Hoy</option><option>Mañana</option><option>Esta semana</option></select></div>
-          <div class="field"><label for="fArea">Zona</label><select id="fArea"><option value="">Todas</option><option>Providencia</option><option>Ñuñoa</option><option>San Miguel</option><option>Santiago Centro</option></select></div>
+          <div class="field"><label for="fArea">Zona</label><select id="fArea"><option value="">Todas</option></select></div>
           <div class="field"><label for="fBudget">Presupuesto</label><select id="fBudget"><option value="">Cualquiera</option><option value="0">Gratis</option><option value="10000">Hasta $10.000</option><option value="20000">Hasta $20.000</option></select></div>
           <div class="field"><label for="fMode">Quiero...</label><select id="fMode"><option value="">Cualquier plan</option><option value="solo">Ir solo</option><option value="grupo">Ir en grupo</option></select></div>
           <button class="btn btn-accent" onclick="renderEvents()">Buscar</button>
@@ -346,7 +346,7 @@ th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
             <div class="field"><label for="cCat">Categoría</label><select id="cCat"><option>Taller</option><option>Social</option><option>Gastronomía</option><option>Deporte</option><option>Cultura</option></select></div>
             <div class="field"><label for="cDate">Fecha</label><select id="cDate"><option>Hoy</option><option>Mañana</option><option>Esta semana</option></select></div>
             <div class="field"><label for="cTime">Hora (HH:MM)</label><input id="cTime" value="19:30"></div>
-            <div class="field"><label for="cArea">Zona</label><select id="cArea"><option>Providencia</option><option>Ñuñoa</option><option>San Miguel</option><option>Santiago Centro</option></select></div>
+            <div class="field"><label for="cArea">Zona</label><select id="cArea"></select></div>
             <div class="field"><label for="cPrice">Precio</label><input id="cPrice" type="number" min="0" value="9000"></div>
             <div class="field"><label for="cCapacity">Cupos</label><input id="cCapacity" type="number" min="1" value="12"></div>
             <div class="field"><label for="cMode">Modalidad</label><select id="cMode"><option value="solo">Apto para ir solo</option><option value="grupo">Orientado a grupos</option></select></div>
@@ -390,10 +390,11 @@ th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
 
 <div id="modal" class="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><strong id="modalTitle">Acción</strong><button class="btn btn-outline btn-sm" onclick="closeModal()">Cerrar</button></div><div class="modal-body" id="modalBody"></div></div></div>
 
-<div class="footer">InterConecta 2.4 · Versión demostrativa: los datos se guardan solo en este navegador.</div>
+<div class="footer">InterConecta 2.5 · Versión demostrativa: los datos se guardan solo en este navegador.</div>
 
 <script>
 const ORG_ID="taller_manos",DEMO_CLIENT="cliente@demo.cl";
+const COMUNAS=["Cerrillos","Cerro Navia","Conchalí","El Bosque","Estación Central","Huechuraba","Independencia","La Cisterna","La Florida","La Granja","La Pintana","La Reina","Las Condes","Lo Barnechea","Lo Espejo","Lo Prado","Macul","Maipú","Ñuñoa","Pedro Aguirre Cerda","Peñalolén","Providencia","Pudahuel","Puente Alto","Quilicura","Quinta Normal","Recoleta","Renca","San Bernardo","San Joaquín","San Miguel","San Ramón","Santiago Centro","Vitacura"];
 let role="client",category="",detailId=null,idSeq=0;
 let bookingFlow={eventId:null,step:1,qty:1,name:"",email:"",error:""};
 
@@ -425,6 +426,12 @@ function uid(){return Date.now()*100+(idSeq++%100)}
 function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)}
 function cuposTxt(n){return n===1?"1 cupo":n+" cupos"}
 function money(n){return n===0?"Gratis":"$"+Number(n).toLocaleString("es-CL")}
+function fillAreas(){
+  const opts=COMUNAS.map(c=>`<option>${esc(c)}</option>`).join("");
+  fArea.insertAdjacentHTML("beforeend",opts);
+  cArea.innerHTML=opts;
+  cArea.value="Providencia";
+}
 function linkLabels(root){(root||document).querySelectorAll(".field").forEach(f=>{const l=f.querySelector("label"),i=f.querySelector("input,select,textarea");if(l&&i&&i.id)l.htmlFor=i.id})}
 
 /* ---------- estado ---------- */
@@ -919,6 +926,7 @@ modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
 [loginEmail,loginPass].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")login()}));
 
 (function prepareEntry(){
+  fillAreas();
   linkLabels(document);
   const reserveId=reservationTarget();
   if(!reserveId)return;
