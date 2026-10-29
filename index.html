@@ -430,8 +430,64 @@ function orgBookings(){const ids=new Set(orgEvents().map(e=>e.id));return state(
 function orgWait(){const ids=new Set(orgEvents().map(e=>e.id));return state().waitlist.filter(w=>ids.has(w.eventId))}
 
 function chooseRole(r){role=r;roleClient.classList.toggle("active",r==="client");roleAdmin.classList.toggle("active",r==="admin");if(r==="client"){loginEmail.value="cliente@demo.cl";loginPass.value="demo123";authHelp.innerHTML="<strong>Demo cliente</strong><br>cliente@demo.cl · demo123"}else{loginEmail.value="admin@tallermanos.cl";loginPass.value="admin123";authHelp.innerHTML="<strong>Demo administrador</strong><br>admin@tallermanos.cl · admin123"}}
-function login(){const em=loginEmail.value.trim().toLowerCase(),pw=loginPass.value;let ses=null;if(role==="client"&&em==="cliente@demo.cl"&&pw==="demo123")ses={role:"client",name:"Cliente Demo"};if(role==="admin"&&em==="admin@tallermanos.cl"&&pw==="admin123")ses={role:"admin",name:"Taller Manos"};if(!ses){loginMsg.innerHTML='<div class="notice" style="background:var(--red-soft);color:var(--red)">Credenciales incorrectas.</div>';return}localStorage.setItem("interconecta20session",JSON.stringify(ses));applySession(ses)}
-function applySession(ses){authView.classList.add("hidden");sessionArea.classList.remove("hidden");sessionName.textContent=ses.name;sessionRole.textContent=ses.role==="admin"?"Administrador":"Cliente";avatar.textContent=ses.role==="admin"?"TM":"C";if(ses.role==="admin"){clientView.classList.add("hidden");clientNav.classList.add("hidden");orgView.classList.remove("hidden");updateOrg()}else{orgView.classList.add("hidden");clientView.classList.remove("hidden");clientNav.classList.remove("hidden");showClientHome()}}
+function login(){
+  const em=loginEmail.value.trim().toLowerCase(),pw=loginPass.value;
+  let ses=null;
+  if(role==="client"&&em==="cliente@demo.cl"&&pw==="demo123")ses={role:"client",name:"Cliente Demo"};
+  if(role==="admin"&&em==="admin@tallermanos.cl"&&pw==="admin123")ses={role:"admin",name:"Taller Manos"};
+  if(!ses){
+    loginMsg.innerHTML='<div class="notice" style="background:var(--red-soft);color:var(--red)">Credenciales incorrectas.</div>';
+    return;
+  }
+  if(reservationTarget() && ses.role==="admin"){
+    chooseRole("client");
+    loginMsg.innerHTML='<div class="notice">Este enlace fue creado para reservar. Ingresa como cliente para continuar.</div>';
+    return;
+  }
+  localStorage.setItem("interconecta20session",JSON.stringify(ses));
+  applySession(ses);
+}
+function applySession(ses){
+  const reserveId=reservationTarget();
+  const activityId=activityTarget();
+
+  if(ses.role==="admin" && reserveId){
+    localStorage.removeItem("interconecta20session");
+    sessionArea.classList.add("hidden");
+    clientNav.classList.add("hidden");
+    clientView.classList.add("hidden");
+    orgView.classList.add("hidden");
+    authView.classList.remove("hidden");
+    chooseRole("client");
+    loginMsg.innerHTML='<div class="notice">Este enlace es para reservar como cliente. Ingresa con la cuenta de cliente para continuar.</div>';
+    return;
+  }
+
+  authView.classList.add("hidden");
+  sessionArea.classList.remove("hidden");
+  sessionName.textContent=ses.name;
+  sessionRole.textContent=ses.role==="admin"?"Administrador":"Cliente";
+  avatar.textContent=ses.role==="admin"?"TM":"C";
+
+  if(ses.role==="admin"){
+    clientView.classList.add("hidden");
+    clientNav.classList.add("hidden");
+    orgView.classList.remove("hidden");
+    updateOrg();
+  }else{
+    orgView.classList.add("hidden");
+    clientView.classList.remove("hidden");
+    clientNav.classList.remove("hidden");
+    if(reserveId){
+      openDetail(reserveId);
+      setTimeout(()=>startBooking(reserveId),120);
+    }else if(activityId){
+      openDetail(activityId);
+    }else{
+      showClientHome();
+    }
+  }
+}
 function logout(){localStorage.removeItem("interconecta20session");sessionArea.classList.add("hidden");clientNav.classList.add("hidden");clientView.classList.add("hidden");orgView.classList.add("hidden");authView.classList.remove("hidden");chooseRole("client")}
 function restore(){try{const s=JSON.parse(localStorage.getItem("interconecta20session"));if(s)applySession(s)}catch(e){}}
 
@@ -509,10 +565,7 @@ async function shareReservation(id){
   }
   if(navigator.clipboard){
     await navigator.clipboard.writeText(link);
-    alert("Enlace de reserva copiado.
-
-Puedes pegarlo en WhatsApp, Instagram o correo:
-"+link);
+    alert("Enlace de reserva copiado.\n\nPuedes pegarlo en WhatsApp, Instagram o correo:\n"+link);
   }else{
     prompt("Copia este enlace de reserva:",link);
   }
@@ -526,27 +579,16 @@ window.addEventListener("hashchange",()=>{
   const ses=JSON.parse(localStorage.getItem("interconecta20session")||"null");
   const reserveId=reservationTarget();
   const activityId=activityTarget();
-
+  if(ses?.role!=="client") return;
   if(reserveId){
-    if(ses?.role==="client"){
-      openDetail(reserveId);
-      setTimeout(()=>startBooking(reserveId),120);
-    }else if(ses?.role==="admin"){
-      localStorage.removeItem("interconecta20session");
-      orgView.classList.add("hidden");
-      sessionArea.classList.add("hidden");
-      authView.classList.remove("hidden");
-      chooseRole("client");
-    }
-    return;
+    openDetail(reserveId);
+    setTimeout(()=>startBooking(reserveId),120);
+  }else if(activityId){
+    openDetail(activityId);
   }
-
-  if(activityId && ses?.role==="client") openDetail(activityId);
 });
 
-// If someone opens a reservation link while an admin session is stored,
-// clear only that session so the link can continue through client login.
-(function prepareReservationEntry(){
+(function prepareEntry(){
   const reserveId=reservationTarget();
   if(!reserveId) return;
   const ses=JSON.parse(localStorage.getItem("interconecta20session")||"null");
