@@ -28,12 +28,14 @@ function showExplore(){
 }
 async function loadActivities(){
   const {data,error}=await db.from("activities").select("*").eq("status","active").order("event_date",{ascending:true}).order("event_time",{ascending:true});
-  if(error){activityGrid.innerHTML=`<div class="empty">${esc(error.message)}</div>`;return}
+  if(error){activityGrid.innerHTML=`<div class="empty"><strong>No pudimos cargar las actividades.</strong><p>Revisa tu conexión e inténtalo nuevamente.</p><button class="btn btn-outline btn-sm" onclick="loadActivities()">Reintentar</button></div>`;return}
   const text=q.value.trim().toLowerCase(),area=areaFilter.value.trim().toLowerCase(),date=dateFilter.value;
   const arr=(data||[]).filter(a=>(!text||(a.title+" "+(a.description||"")+" "+(a.category||"")+" "+(a.venue_name||"")).toLowerCase().includes(text))&&(!area||String(a.area).toLowerCase().includes(area))&&(!date||a.event_date===date));
   count.textContent=arr.length+" actividad(es)";
-  activityGrid.innerHTML=arr.length?arr.map(activityCard).join(""):`<div class="empty" style="grid-column:1/-1">No encontramos actividades.</div>`;
+  const hasFilters=!!(text||area||date);
+  activityGrid.innerHTML=arr.length?arr.map(activityCard).join(""):`<div class="empty" style="grid-column:1/-1"><strong>${hasFilters?"No encontramos actividades con esos filtros.":"Todavía no hay actividades publicadas."}</strong><p>${hasFilters?"Prueba otra búsqueda, comuna o fecha.":"Cuando un organizador publique una experiencia, aparecerá aquí."}</p>${hasFilters?'<button class="btn btn-outline btn-sm" onclick="clearFilters()">Limpiar filtros</button>':''}</div>`;
 }
+function clearFilters(){q.value="";areaFilter.value="";dateFilter.value="";loadActivities()}
 function activityCard(a){
   const free=Math.max(0,a.capacity-a.reserved_count);
   return `<article class="card"><div class="card-media"><h3>${esc(a.title)}</h3></div><div class="card-body">
@@ -45,7 +47,7 @@ function activityCard(a){
 }
 async function openActivity(id,push=true){
   const {data:a,error}=await db.from("activities").select("*").eq("id",id).maybeSingle();
-  if(error||!a){exploreView.classList.add("hidden");detailView.classList.remove("hidden");detailView.innerHTML=`<div class="empty">Esta actividad no existe o ya no está disponible.</div>`;return}
+  if(error||!a){exploreView.classList.add("hidden");detailView.classList.remove("hidden");detailView.innerHTML=`<div class="empty"><strong>Esta actividad ya no está disponible.</strong><p>Puede haber sido pausada o cancelada por el organizador.</p><button class="btn btn-outline btn-sm" onclick="showExplore()">Ver otras actividades</button></div>`;return}
   currentActivity=a;if(new URLSearchParams(location.search).get("preview")!=="1")trackView(id);
   if(push)history.pushState(null,"",`?actividad=${encodeURIComponent(id)}`);
   exploreView.classList.add("hidden");bookingsView.classList.add("hidden");detailView.classList.remove("hidden");
@@ -174,7 +176,7 @@ async function showBookings(){
     db.from("reservations").select("*,activities(title,event_date,event_time,area,venue_name,address)").eq("client_id",clientSession.user.id).order("created_at",{ascending:false}),
     db.from("waitlist").select("*,activities(title,event_date,event_time,area,venue_name,address)").eq("client_id",clientSession.user.id).eq("status","waiting").order("created_at",{ascending:false})
   ]);
-  if(re||we){myBookings.innerHTML=`<div class="empty">${esc(re?.message||we?.message)}</div>`;return}
+  if(re||we){myBookings.innerHTML=`<div class="empty"><strong>No pudimos cargar tus reservas.</strong><p>Revisa tu conexión e inténtalo nuevamente.</p><button class="btn btn-outline btn-sm" onclick="showBookings()">Reintentar</button></div>`;return}
   const wh=(wait||[]).map(w=>`<div class="block"><div class="block-body"><strong>${esc(w.activities?.title||"Actividad")}</strong>
     <div class="sub">${fmtDate(w.activities?.event_date)} · ${fmtTime(w.activities?.event_time)} · ${esc(w.activities?.venue_name||w.activities?.area||"")}</div>
     ${w.contact_phone?`<div class="sub">Contacto: ${esc(w.contact_phone)}</div>`:""}<div class="status warn" style="margin-top:8px">Lista de espera</div>
@@ -186,7 +188,7 @@ async function showBookings(){
     ${r.reason?`<p class="sub">${esc(r.reason)}</p>`:""}
     ${r.status==="confirmed"?`<div class="quick-actions"><button class="btn btn-danger btn-sm" onclick="cancelReservation('${r.id}')">Cancelar reserva</button></div>`:""}
   </div></div>`).join("");
-  myBookings.innerHTML=(wh+rh)||`<div class="empty">Aún no tienes reservas.</div>`;
+  myBookings.innerHTML=(wh+rh)||`<div class="empty"><strong>Aún no tienes reservas.</strong><p>Explora las actividades disponibles y reserva la que más te guste.</p><button class="btn btn-primary btn-sm" onclick="showExplore()">Explorar actividades</button></div>`;
 }
 async function cancelReservation(id){
   if(!confirm("¿Cancelar esta reserva?"))return;
