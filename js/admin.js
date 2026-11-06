@@ -2,6 +2,7 @@ let adminSession=null,adminProfile=null,adminAuthMode="login",editingId=null;
 let cachedActivities=[],cachedReservations=[],cachedWait=[],cachedViews={};
 
 async function bootAdmin(){
+  fillCommuneSelect(fArea);fDate.min=chileToday();
   ({session:adminSession,profile:adminProfile}=await sessionProfile());
   if(adminSession&&adminProfile?.role==="admin"){
     showAdminApp();await refreshAdmin();setInterval(()=>{if(adminSession)refreshAdmin(false)},5000);
@@ -67,15 +68,16 @@ function statsFor(a){
   return {all,confirmed,cancelled,wait,visits,generated,conversion,occupancy,free:Math.max(0,a.capacity-a.reserved_count)};
 }
 function renderAdmin(){
-  const active=cachedActivities.filter(a=>a.status==="active"),confirmed=cachedReservations.filter(r=>r.status==="confirmed");
+  const active=cachedActivities.filter(a=>a.status==="active"&&activityIsFuture(a)),confirmed=cachedReservations.filter(r=>r.status==="confirmed");
   const occupied=active.reduce((n,a)=>n+a.reserved_count,0),capacity=active.reduce((n,a)=>n+a.capacity,0);
   const visits=active.reduce((n,a)=>n+(cachedViews[a.id]||0),0),generated=cachedReservations.length,cancelled=cachedReservations.filter(r=>r.status==="cancelled").length;
   const conversion=visits?Math.round(generated/visits*100):0;
   kActive.textContent=active.length;kReservations.textContent=confirmed.length;kOccupied.textContent=occupied;kWait.textContent=cachedWait.length;
   aVisits.textContent=visits;aGenerated.textContent=generated;aConversion.textContent=conversion+"%";
   aOccupancy.textContent=capacity?Math.round(occupied/capacity*100)+"%":"0%";aCancelled.textContent=cancelled;
-  overviewActivities.innerHTML=active.slice(0,4).map(activityRow).join("")||'<div class="empty">Todavía no tienes actividades publicadas.</div>';
-  activitiesList.innerHTML=cachedActivities.map(activityRow).join("")||'<div class="empty">Crea tu primera actividad para comenzar el piloto.</div>';
+  const ordered=[...cachedActivities].sort((a,b)=>{const af=activityIsFuture(a),bf=activityIsFuture(b);if(af!==bf)return af?-1:1;return af?activityTimeKey(a).localeCompare(activityTimeKey(b)):activityTimeKey(b).localeCompare(activityTimeKey(a))});
+  overviewActivities.innerHTML=active.slice(0,4).map(activityRow).join("")||'<div class="empty">No tienes próximas actividades publicadas.</div>';
+  activitiesList.innerHTML=ordered.map(activityRow).join("")||'<div class="empty">Crea tu primera actividad para comenzar el piloto.</div>';
   overviewReservations.innerHTML=reservationTable(cachedReservations.slice(0,5));
   reservationsTable.innerHTML=reservationTable(cachedReservations);
   participantsTable.innerHTML=participantTable(cachedReservations);
@@ -83,18 +85,18 @@ function renderAdmin(){
   activityMetrics.innerHTML=metricsTable();
 }
 function activityRow(a){
-  const st=a.status,label=st==="active"?"Publicada":st==="paused"?"Pausada":"Cancelada",s=statsFor(a);
+  const st=a.status,ended=st==="active"&&!activityIsFuture(a),label=st==="cancelled"?"Cancelada":st==="paused"?"Pausada":ended?"Finalizada":"Publicada",s=statsFor(a);
   return `<div class="activity-row"><div><strong>${esc(a.title)}</strong>
     <div class="sub">${fmtDate(a.event_date)} · ${fmtTime(a.event_time)} · ${esc(a.venue_name||a.area)}</div>
     <div class="activity-summary">${st==="cancelled"?"Historial conservado · ":""}${a.reserved_count}/${a.capacity} reservados · ${s.free} libres · ${s.cancelled.length} cancelaciones · ${s.wait} en espera · ${s.visits} visitas</div>
   </div>
-  <div><span class="status ${st==="active"?"ok":st==="cancelled"?"cancel":"warn"}">${label}</span></div>
+  <div><span class="status ${st==="cancelled"?"cancel":st==="active"&&!ended?"ok":"warn"}">${label}</span></div>
   <div><strong>${a.reserved_count}/${a.capacity}</strong><div class="sub">cupos</div></div>
   <div class="quick-actions">
-    ${st==="active"?`<button class="btn btn-outline btn-sm" onclick="previewActivity('${a.id}')">Vista previa</button>
+    ${st==="active"&&!ended?`<button class="btn btn-outline btn-sm" onclick="previewActivity('${a.id}')">Vista previa</button>
     <button class="btn btn-primary btn-sm" onclick="copyReservationLink('${a.id}')">Copiar enlace</button>
     <button class="btn btn-whatsapp btn-sm" onclick="shareWhatsApp('${a.id}')">WhatsApp</button>`:""}
-    ${st!=="cancelled"?`<button class="btn btn-outline btn-sm" onclick="editActivity('${a.id}')">Editar</button>
+    ${st!=="cancelled"&&!ended?`<button class="btn btn-outline btn-sm" onclick="editActivity('${a.id}')">Editar</button>
     <button class="btn btn-outline btn-sm" onclick="togglePause('${a.id}')">${st==="paused"?"Reactivar":"Pausar"}</button>
     <button class="btn btn-danger btn-sm" onclick="cancelActivity('${a.id}')">Cancelar</button>`:""}
     <button class="btn btn-outline btn-sm" onclick="duplicateActivity('${a.id}')">Duplicar</button>
@@ -130,14 +132,14 @@ function metricsTable(){
   </tbody></table>`;
 }
 function showActivityForm(){
-  editingId=null;formTitle.textContent="Nueva actividad";saveActivityBtn.textContent="Publicar actividad";activityForm.classList.remove("hidden");activityFormMsg.innerHTML="";
+  editingId=null;formTitle.textContent="Nueva actividad";saveActivityBtn.textContent="Publicar actividad";activityForm.classList.remove("hidden");activityFormMsg.innerHTML="";fDate.min=chileToday();
   fTitle.value="";fDate.value="";fTime.value="";fArea.value="";fVenue.value="";fAddress.value="";fPrice.value="0";fCapacity.value="10";fDescription.value="";fIncludes.value="";fPolicy.value="";fInstructions.value="";
 }
 function hideActivityForm(){activityForm.classList.add("hidden");editingId=null}
 function editActivity(id){
   const a=cachedActivities.find(x=>x.id===id);if(!a)return;editingId=id;openAdminTab("activities");activityForm.classList.remove("hidden");
   formTitle.textContent="Editar actividad";saveActivityBtn.textContent="Guardar cambios";
-  fTitle.value=a.title;fCategory.value=a.category;fDate.value=a.event_date;fTime.value=fmtTime(a.event_time);fArea.value=a.area;
+  fTitle.value=a.title;fCategory.value=a.category;fDate.value=a.event_date;fTime.value=fmtTime(a.event_time);setCommuneValue(fArea,a.area);
   fVenue.value=a.venue_name||"";fAddress.value=a.address||"";fPrice.value=a.price;fCapacity.value=a.capacity;fDescription.value=a.description||"";
   fIncludes.value=a.includes||"";fPolicy.value=a.policy||"";fInstructions.value=a.instructions||"";
   activityForm.scrollIntoView({behavior:"smooth"});
@@ -152,6 +154,7 @@ async function saveActivity(){
   if(payload.title.length<3||!payload.event_date||!payload.event_time||!payload.area||!Number.isInteger(payload.capacity)||payload.capacity<1||payload.price<0){
     notify(activityFormMsg,"Completa nombre, fecha, hora, comuna, precio y cupos correctamente.","error");return;
   }
+  if(!activityIsFuture(payload)){notify(activityFormMsg,"La fecha y hora deben ser futuras. Una actividad pasada no puede publicarse.","error");return}
   let error;
   if(editingId){
     const current=cachedActivities.find(a=>a.id===editingId);
@@ -165,14 +168,17 @@ async function saveActivity(){
 }
 async function duplicateActivity(id){
   const a=cachedActivities.find(x=>x.id===id);if(!a)return;
-  const copy={owner_id:adminSession.user.id,title:a.title+" · copia",category:a.category,event_date:a.event_date,event_time:a.event_time,area:a.area,
-    venue_name:a.venue_name,address:a.address,price:a.price,capacity:a.capacity,description:a.description,includes:a.includes,policy:a.policy,
-    instructions:a.instructions,org_name:a.org_name,status:"paused"};
-  const {error}=await db.from("activities").insert(copy);if(error)alert(error.message);await refreshAdmin();
+  editingId=null;openAdminTab("activities");activityForm.classList.remove("hidden");activityFormMsg.innerHTML="";fDate.min=chileToday();
+  formTitle.textContent="Duplicar actividad";saveActivityBtn.textContent="Publicar copia";
+  fTitle.value=a.title+" · copia";fCategory.value=a.category;fDate.value=activityIsFuture(a)?a.event_date:"";fTime.value=fmtTime(a.event_time);setCommuneValue(fArea,a.area);
+  fVenue.value=a.venue_name||"";fAddress.value=a.address||"";fPrice.value=a.price;fCapacity.value=a.capacity;fDescription.value=a.description||"";
+  fIncludes.value=a.includes||"";fPolicy.value=a.policy||"";fInstructions.value=a.instructions||"";
+  if(!activityIsFuture(a))notify(activityFormMsg,"Elige una nueva fecha futura para publicar la copia.","warn");
+  activityForm.scrollIntoView({behavior:"smooth"});
 }
 async function togglePause(id){
   const a=cachedActivities.find(x=>x.id===id);if(!a)return;
-  const {error}=await db.from("activities").update({status:a.status==="paused"?"active":"paused"}).eq("id",id);if(error)alert(error.message);await refreshAdmin();
+  const {error}=await db.rpc("set_activity_paused",{p_activity:id,p_paused:a.status!=="paused"});if(error)alert(error.message);await refreshAdmin();
 }
 async function cancelActivity(id){
   const a=cachedActivities.find(x=>x.id===id);if(!a)return;
@@ -206,11 +212,17 @@ async function toggleAttendance(id,value){
 async function promoteWait(id){
   const {error}=await db.rpc("admin_promote_waitlist",{p_waitlist:id});if(error)alert(error.message);await refreshAdmin();
 }
+function csvSafe(v){
+  let s=String(v??"");
+  if(/^[\s]*[=+\-@]/.test(s)||/^[\t\r]/.test(s))s="'"+s;
+  return '"'+s.replace(/"/g,'""')+'"';
+}
 function exportCSV(){
   const rows=[["Nombre","Usuario","Teléfono","Actividad","Cupos","Estado","Fecha"]];
   cachedReservations.forEach(r=>{const a=cachedActivities.find(x=>x.id===r.activity_id);rows.push([r.client_name,r.client_username,r.contact_phone||"",a?.title||"",r.qty,r.status,new Date(r.created_at).toLocaleString("es-CL")])});
-  const csv="\ufeff"+rows.map(row=>row.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const csv="\ufeff"+rows.map(row=>row.map(csvSafe).join(";")).join("\n");
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),el=document.createElement("a");
   el.href=url;el.download="reservas-interconecta.csv";el.click();URL.revokeObjectURL(url);
 }
+
 bootAdmin();
