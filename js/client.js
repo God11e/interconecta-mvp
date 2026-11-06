@@ -173,21 +173,26 @@ async function showBookings(){
   if(!clientSession){openAuth("login");return}
   exploreView.classList.add("hidden");detailView.classList.add("hidden");bookingsView.classList.remove("hidden");
   const [{data:res,error:re},{data:wait,error:we}]=await Promise.all([
-    db.from("reservations").select("*,activities(title,event_date,event_time,area,venue_name,address)").eq("client_id",clientSession.user.id).order("created_at",{ascending:false}),
-    db.from("waitlist").select("*,activities(title,event_date,event_time,area,venue_name,address)").eq("client_id",clientSession.user.id).eq("status","waiting").order("created_at",{ascending:false})
+    db.from("reservations").select("*,activities(title,event_date,event_time,area,venue_name,address,status)").eq("client_id",clientSession.user.id).order("created_at",{ascending:false}),
+    db.from("waitlist").select("*,activities(title,event_date,event_time,area,venue_name,address,status)").eq("client_id",clientSession.user.id).eq("status","waiting").order("created_at",{ascending:false})
   ]);
   if(re||we){myBookings.innerHTML=`<div class="empty"><strong>No pudimos cargar tus reservas.</strong><p>Revisa tu conexión e inténtalo nuevamente.</p><button class="btn btn-outline btn-sm" onclick="showBookings()">Reintentar</button></div>`;return}
   const wh=(wait||[]).map(w=>`<div class="block"><div class="block-body"><strong>${esc(w.activities?.title||"Actividad")}</strong>
     <div class="sub">${fmtDate(w.activities?.event_date)} · ${fmtTime(w.activities?.event_time)} · ${esc(w.activities?.venue_name||w.activities?.area||"")}</div>
     ${w.contact_phone?`<div class="sub">Contacto: ${esc(w.contact_phone)}</div>`:""}<div class="status warn" style="margin-top:8px">Lista de espera</div>
     <div class="quick-actions"><button class="btn btn-danger btn-sm" onclick="leaveWait('${w.id}')">Salir de la lista</button></div></div></div>`).join("");
-  const rh=(res||[]).map(r=>`<div class="block"><div class="block-body"><div style="display:flex;justify-content:space-between;gap:10px">
-    <div><strong>${esc(r.activities?.title||"Actividad")}</strong><div class="sub">${fmtDate(r.activities?.event_date)} · ${fmtTime(r.activities?.event_time)} · ${esc(r.activities?.venue_name||r.activities?.area||"")}</div>
-    ${r.contact_phone?`<div class="sub">Contacto: ${esc(r.contact_phone)}</div>`:""}</div>
-    <span class="status ${r.status==="confirmed"?"ok":"cancel"}">${r.status==="confirmed"?"Confirmada":"Cancelada"}</span></div>
-    ${r.reason?`<p class="sub">${esc(r.reason)}</p>`:""}
-    ${r.status==="confirmed"?`<div class="quick-actions"><button class="btn btn-danger btn-sm" onclick="cancelReservation('${r.id}')">Cancelar reserva</button></div>`:""}
-  </div></div>`).join("");
+  const rh=(res||[]).map(r=>{
+    const activityCancelled=r.activities?.status==="cancelled"||String(r.reason||"").toLowerCase().includes("actividad cancelada por el organizador");
+    const canCancel=r.status==="confirmed"&&!activityCancelled;
+    return `<div class="block"><div class="block-body">${activityCancelled?`<div class="notice error"><strong>Actividad cancelada por el organizador</strong><div style="margin-top:4px;font-weight:500">Tu reserva queda guardada en el historial. No debes asistir a esta actividad.</div></div>`:""}<div style="display:flex;justify-content:space-between;gap:10px">
+      <div><strong>${esc(r.activities?.title||"Actividad")}</strong><div class="sub">${fmtDate(r.activities?.event_date)} · ${fmtTime(r.activities?.event_time)} · ${esc(r.activities?.venue_name||r.activities?.area||"")}</div>
+      ${r.activities?.address?`<div class="sub">${esc(r.activities.address)}</div>`:""}
+      ${r.contact_phone?`<div class="sub">Contacto entregado: ${esc(r.contact_phone)}</div>`:""}</div>
+      <span class="status ${r.status==="confirmed"?"ok":"cancel"}">${activityCancelled?"Actividad cancelada":r.status==="confirmed"?"Confirmada":"Reserva cancelada"}</span></div>
+      ${r.reason&&!activityCancelled?`<p class="sub">${esc(r.reason)}</p>`:""}
+      ${canCancel?`<div class="quick-actions"><button class="btn btn-danger btn-sm" onclick="cancelReservation('${r.id}')">Cancelar reserva</button></div>`:""}
+    </div></div>`;
+  }).join("");
   myBookings.innerHTML=(wh+rh)||`<div class="empty"><strong>Aún no tienes reservas.</strong><p>Explora las actividades disponibles y reserva la que más te guste.</p><button class="btn btn-primary btn-sm" onclick="showExplore()">Explorar actividades</button></div>`;
 }
 async function cancelReservation(id){
