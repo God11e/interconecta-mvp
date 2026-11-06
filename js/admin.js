@@ -86,7 +86,7 @@ function activityRow(a){
   const st=a.status,label=st==="active"?"Publicada":st==="paused"?"Pausada":"Cancelada",s=statsFor(a);
   return `<div class="activity-row"><div><strong>${esc(a.title)}</strong>
     <div class="sub">${fmtDate(a.event_date)} · ${fmtTime(a.event_time)} · ${esc(a.venue_name||a.area)}</div>
-    <div class="activity-summary">${a.reserved_count}/${a.capacity} reservados · ${s.free} libres · ${s.cancelled.length} cancelaciones · ${s.wait} en espera · ${s.visits} visitas</div>
+    <div class="activity-summary">${st==="cancelled"?"Historial conservado · ":""}${a.reserved_count}/${a.capacity} reservados · ${s.free} libres · ${s.cancelled.length} cancelaciones · ${s.wait} en espera · ${s.visits} visitas</div>
   </div>
   <div><span class="status ${st==="active"?"ok":st==="cancelled"?"cancel":"warn"}">${label}</span></div>
   <div><strong>${a.reserved_count}/${a.capacity}</strong><div class="sub">cupos</div></div>
@@ -175,8 +175,19 @@ async function togglePause(id){
   const {error}=await db.from("activities").update({status:a.status==="paused"?"active":"paused"}).eq("id",id);if(error)alert(error.message);await refreshAdmin();
 }
 async function cancelActivity(id){
-  if(!confirm("¿Cancelar esta actividad? También se cancelarán sus reservas confirmadas."))return;
-  const {error}=await db.rpc("cancel_activity",{p_activity:id});if(error)alert(error.message);await refreshAdmin();
+  const a=cachedActivities.find(x=>x.id===id);if(!a)return;
+  const s=statsFor(a);
+  const people=s.confirmed.reduce((n,r)=>n+Number(r.qty||0),0);
+  const message=`Esta actividad tiene ${s.confirmed.length} reserva(s) confirmada(s) para ${people} cupo(s)${s.wait?` y ${s.wait} persona(s) en lista de espera`:""}.
+
+Al cancelarla, dejará de aparecer en Explorar, las reservas quedarán marcadas como canceladas y el historial se conservará para el organizador y los participantes.
+
+¿Deseas continuar?`;
+  if(!confirm(message))return;
+  const {error}=await db.rpc("cancel_activity",{p_activity:id});
+  if(error){alert(error.message);return}
+  alert("Actividad cancelada. El historial de reservas y métricas se conservó.");
+  await refreshAdmin();
 }
 function reservationLink(id){return location.origin+"/?actividad="+id}
 function previewActivity(id){window.open(reservationLink(id)+"&preview=1","_blank","noopener")}
