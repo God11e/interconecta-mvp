@@ -25,7 +25,7 @@
   </div>
   <div class="filters">
     <div class="field"><label>Buscar</label><input id="q" placeholder="Cerámica, bordado, juegos..." oninput="loadActivities()"></div>
-    <div class="field"><label>Comuna</label><input id="areaFilter" placeholder="Providencia" oninput="loadActivities()"></div>
+    <div class="field"><label>Comuna</label><select id="areaFilter" onchange="loadActivities()"><option value="">Todas las comunas</option></select></div>
     <div class="field"><label>Fecha</label><input id="dateFilter" type="date" onchange="loadActivities()"></div>
     <button class="btn btn-accent" onclick="loadActivities()">Buscar</button>
   </div>
@@ -39,7 +39,7 @@
   <div id="myBookings"></div>
 </section>
 </main>
-<div class="footer">InterConecta Pilot v1.1.1 · Cliente</div>
+<div class="footer">InterConecta Pilot v1.2.0 · Cliente</div>
 
 <div id="authModal" class="modal-bg"><div class="modal">
   <div class="modal-head"><strong>Tu cuenta InterConecta</strong><button class="btn btn-outline btn-sm" onclick="closeAuth()">Cerrar</button></div>
@@ -61,6 +61,7 @@
       <div id="reserveQtyField" class="field"><label>Cantidad de cupos</label><select id="reserveQty"><option value="1">1 persona</option><option value="2">2 personas</option></select></div>
       <div class="field" style="margin-top:10px"><label>Teléfono / WhatsApp</label><input id="reservePhone" type="tel" placeholder="+56 9 1234 5678" autocomplete="tel"></div>
       <div class="privacy-note"><strong>Privacidad:</strong> Tu número será compartido únicamente con el organizador de esta actividad para coordinar tu reserva.</div>
+      <div class="notice warn" style="margin-top:10px"><strong>Pago:</strong> InterConecta no procesa pagos en línea. Si la actividad tiene precio, el pago se realiza directamente con el organizador/local según sus indicaciones.</div>
       <button id="reserveSubmitBtn" class="btn btn-accent" style="width:100%;margin-top:13px" onclick="confirmReservation()">Confirmar reserva</button>
       <div id="reserveMsg"></div>
     </div>
