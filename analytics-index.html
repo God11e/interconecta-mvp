@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#17352f"><title>InterConecta · Analítica del equipo</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+<header class="topbar"><div class="container nav">
+  <div class="brand"><div class="logo">IC</div><span>InterConecta <small style="font-size:11px;color:var(--muted)">ANALÍTICA</small></span></div>
+  <div class="actions"><span id="analyticsIdentity" class="sub"></span><button id="analyticsLogout" class="btn btn-outline hidden" onclick="analyticsSignOut()">Salir</button></div>
+</div></header>
+
+<section id="analyticsAuth" class="container" style="max-width:520px;padding-top:42px">
+  <div class="block"><div class="block-head"><h2>Analítica del equipo</h2></div><div class="block-body">
+    <p class="sub">Acceso de solo lectura para el equipo InterConecta. No permite editar locales ni ver datos personales de clientes.</p>
+    <div class="field"><label>Nombre de usuario autorizado</label><input id="analyticsUsername" placeholder="equipo.interconecta" autocomplete="username"></div>
+    <div class="field" style="margin-top:10px"><label>Contraseña</label><input id="analyticsPassword" type="password" placeholder="Tu contraseña"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:13px" onclick="submitAnalyticsAuth()">Ingresar a analítica</button>
+    <div id="analyticsAuthMsg"></div>
+  </div></div>
+</section>
+
+<section id="analyticsApp" class="container hidden" style="padding-top:28px;padding-bottom:48px">
+  <div class="section-head"><div><h2>Resultados del piloto</h2><p>Vista agregada de todos los locales y actividades, sin datos personales de participantes.</p></div><button class="btn btn-outline" onclick="loadTeamAnalytics()">Actualizar</button></div>
+  <div class="grid5">
+    <div class="kpi"><small>Locales con actividad</small><strong id="tLocales">0</strong></div>
+    <div class="kpi"><small>Actividades</small><strong id="tActivities">0</strong></div>
+    <div class="kpi"><small>Visitas únicas</small><strong id="tVisits">0</strong></div>
+    <div class="kpi"><small>Reservas generadas</small><strong id="tReservations">0</strong></div>
+    <div class="kpi"><small>Conversión global</small><strong id="tConversion">0%</strong></div>
+  </div>
+
+  <div class="block"><div class="block-head"><h3>Resumen por local</h3></div><div class="block-body tablewrap" id="localAnalytics"></div></div>
+  <div class="block"><div class="block-head"><h3>Detalle por actividad</h3></div><div class="block-body tablewrap" id="activityAnalytics"></div></div>
+</section>
+
+<div class="footer">InterConecta Pilot v1.2.0 · Analítica</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/analytics.js"></script>
+</body>
+</html>
