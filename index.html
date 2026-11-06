@@ -39,7 +39,7 @@
   <div id="myBookings"></div>
 </section>
 </main>
-<div class="footer">InterConecta Pilot v1.1 · Cliente</div>
+<div class="footer">InterConecta Pilot v1.1.1 · Cliente</div>
 
 <div id="authModal" class="modal-bg"><div class="modal">
   <div class="modal-head"><strong>Tu cuenta InterConecta</strong><button class="btn btn-outline btn-sm" onclick="closeAuth()">Cerrar</button></div>
@@ -60,7 +60,7 @@
     <div id="reserveForm">
       <div id="reserveQtyField" class="field"><label>Cantidad de cupos</label><select id="reserveQty"><option value="1">1 persona</option><option value="2">2 personas</option></select></div>
       <div class="field" style="margin-top:10px"><label>Teléfono / WhatsApp</label><input id="reservePhone" type="tel" placeholder="+56 9 1234 5678" autocomplete="tel"></div>
-      <p class="sub">El organizador podrá usar este número solo para contactarte respecto de esta actividad.</p>
+      <div class="privacy-note"><strong>Privacidad:</strong> Tu número será compartido únicamente con el organizador de esta actividad para coordinar tu reserva.</div>
       <button id="reserveSubmitBtn" class="btn btn-accent" style="width:100%;margin-top:13px" onclick="confirmReservation()">Confirmar reserva</button>
       <div id="reserveMsg"></div>
     </div>
