@@ -16,3 +16,10 @@
 .confirmation-details strong{text-align:right}
 @media(max-width:950px){.grid5{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.grid5{grid-template-columns:1fr}.confirmation-details>div{display:block}.confirmation-details strong{display:block;text-align:left;margin-top:3px}}
+
+/* Ajustes v1.1.1 */
+.hero-card p.sub{color:var(--muted);opacity:1}
+.privacy-note{margin-top:10px;padding:10px 12px;border:1px solid #cfe0d9;border-radius:9px;background:#f2f8f5;color:#3f5b53;font-size:12px;line-height:1.5}
+.privacy-note strong{color:var(--brand)}
+.empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:5px}
+.empty p{margin:4px 0 12px;line-height:1.5}
