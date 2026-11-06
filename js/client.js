@@ -12,6 +12,7 @@ async function trackView(activityId){
   try{await db.rpc("track_activity_view",{p_activity:activityId,p_visitor_key:visitorKey()})}catch(e){}
 }
 async function bootClient(){
+  fillCommuneSelect(areaFilter,{all:true});
   ({session:clientSession,profile:clientProfile}=await sessionProfile());
   renderSession();await loadActivities();
   const id=new URLSearchParams(location.search).get("actividad");
@@ -30,7 +31,7 @@ async function loadActivities(){
   const {data,error}=await db.from("activities").select("*").eq("status","active").order("event_date",{ascending:true}).order("event_time",{ascending:true});
   if(error){activityGrid.innerHTML=`<div class="empty"><strong>No pudimos cargar las actividades.</strong><p>Revisa tu conexión e inténtalo nuevamente.</p><button class="btn btn-outline btn-sm" onclick="loadActivities()">Reintentar</button></div>`;return}
   const text=q.value.trim().toLowerCase(),area=areaFilter.value.trim().toLowerCase(),date=dateFilter.value;
-  const arr=(data||[]).filter(a=>(!text||(a.title+" "+(a.description||"")+" "+(a.category||"")+" "+(a.venue_name||"")).toLowerCase().includes(text))&&(!area||String(a.area).toLowerCase().includes(area))&&(!date||a.event_date===date));
+  const arr=(data||[]).filter(a=>activityIsFuture(a)&&(!text||(a.title+" "+(a.description||"")+" "+(a.category||"")+" "+(a.venue_name||"")).toLowerCase().includes(text))&&(!area||String(a.area).toLowerCase()===area)&&(!date||a.event_date===date));
   count.textContent=arr.length+" actividad(es)";
   const hasFilters=!!(text||area||date);
   activityGrid.innerHTML=arr.length?arr.map(activityCard).join(""):`<div class="empty" style="grid-column:1/-1"><strong>${hasFilters?"No encontramos actividades con esos filtros.":"Todavía no hay actividades publicadas."}</strong><p>${hasFilters?"Prueba otra búsqueda, comuna o fecha.":"Cuando un organizador publique una experiencia, aparecerá aquí."}</p>${hasFilters?'<button class="btn btn-outline btn-sm" onclick="clearFilters()">Limpiar filtros</button>':''}</div>`;
@@ -48,10 +49,13 @@ function activityCard(a){
 async function openActivity(id,push=true){
   const {data:a,error}=await db.from("activities").select("*").eq("id",id).maybeSingle();
   if(error||!a){exploreView.classList.add("hidden");detailView.classList.remove("hidden");detailView.innerHTML=`<div class="empty"><strong>Esta actividad ya no está disponible.</strong><p>Puede haber sido pausada o cancelada por el organizador.</p><button class="btn btn-outline btn-sm" onclick="showExplore()">Ver otras actividades</button></div>`;return}
-  currentActivity=a;if(new URLSearchParams(location.search).get("preview")!=="1")trackView(id);
+  currentActivity=a;const ended=!activityIsFuture(a);if(!ended&&new URLSearchParams(location.search).get("preview")!=="1")trackView(id);
   if(push)history.pushState(null,"",`?actividad=${encodeURIComponent(id)}`);
   exploreView.classList.add("hidden");bookingsView.classList.add("hidden");detailView.classList.remove("hidden");
   const free=Math.max(0,a.capacity-a.reserved_count);
+  if(ended){
+    detailView.innerHTML=`<button class="btn btn-outline btn-sm" onclick="showExplore()">← Volver</button><div class="empty" style="margin-top:14px"><strong>Esta actividad ya finalizó.</strong><p>La fecha y hora de inicio ya pasaron, por lo que no acepta nuevas reservas ni lista de espera.</p><button class="btn btn-primary btn-sm" onclick="showExplore()">Ver próximas actividades</button></div>`;return;
+  }
   detailView.innerHTML=`<button class="btn btn-outline btn-sm" onclick="showExplore()">← Volver</button>
   <div class="detail-grid" style="margin-top:14px"><div class="detail-main"><div class="detail-cover"><h1>${esc(a.title)}</h1></div><div class="detail-copy">
     <div class="meta">${fmtDate(a.event_date)} · ${fmtTime(a.event_time)} · ${esc(a.area)}</div>
@@ -68,6 +72,7 @@ async function openActivity(id,push=true){
     <h3>Organiza</h3><p>${esc(a.org_name||"Organizador")}</p>
   </div></div>
   <aside class="sidebox"><small class="sub">Reserva</small><h2>${money(a.price)}</h2><p class="sub">${free>0?free+" cupos disponibles":"Actividad completa"}</p>
+    <div class="notice warn" style="margin:10px 0"><strong>Pago:</strong> ${esc(paymentText(a))}</div>
     ${free>0?`<button class="btn btn-accent" style="width:100%" onclick="reserveClick('${a.id}')">Reservar ahora</button>`:`<button class="btn btn-primary" style="width:100%" onclick="waitlistClick('${a.id}')">Unirme a lista de espera</button>`}
     <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="shareClientActivity('${a.id}')">Compartir</button>
   </aside></div>`;
@@ -100,6 +105,7 @@ function reserveClick(id){
   openReserve("reserve");
 }
 function openReserve(mode="reserve"){
+  if(!currentActivity||!activityIsFuture(currentActivity)){notify(reserveMsg,"Esta actividad ya comenzó o finalizó.","error");return}
   reserveMode=mode;reserveMsg.innerHTML="";reservePhone.value="";reserveQty.value="1";
   reserveForm.classList.remove("hidden");reserveSuccess.classList.add("hidden");reserveSuccess.innerHTML="";
   reserveQtyField.classList.toggle("hidden",mode==="waitlist");
@@ -110,6 +116,7 @@ function closeReserve(){reserveModal.classList.remove("open")}
 function validPhone(v){const d=String(v||"").replace(/\D/g,"");return d.length>=8&&d.length<=15}
 async function confirmReservation(){
   if(!currentActivity){notify(reserveMsg,"Vuelve a abrir la actividad.","error");return}
+  if(!activityIsFuture(currentActivity)){notify(reserveMsg,"Esta actividad ya comenzó o finalizó y no acepta reservas.","error");return}
   const qty=reserveMode==="waitlist"?1:Number(reserveQty.value),phone=reservePhone.value.trim();
   if(!validPhone(phone)){notify(reserveMsg,"Ingresa un teléfono o WhatsApp válido.","error");return}
 
@@ -137,6 +144,7 @@ async function confirmReservation(){
       ${currentActivity.address?`<div><span>Dirección</span><strong>${esc(currentActivity.address)}</strong></div>`:""}
       <div><span>Cupos</span><strong>${qty}</strong></div>
       <div><span>Contacto entregado</span><strong>${esc(phone)}</strong></div>
+      <div><span>Pago</span><strong>${esc(paymentText(currentActivity))}</strong></div>
     </div>
     ${currentActivity.instructions?`<div class="notice warn"><strong>Antes de asistir:</strong> ${esc(currentActivity.instructions)}</div>`:""}
     <div class="quick-actions" style="margin-top:14px">
@@ -183,12 +191,13 @@ async function showBookings(){
     <div class="quick-actions"><button class="btn btn-danger btn-sm" onclick="leaveWait('${w.id}')">Salir de la lista</button></div></div></div>`).join("");
   const rh=(res||[]).map(r=>{
     const activityCancelled=r.activities?.status==="cancelled"||String(r.reason||"").toLowerCase().includes("actividad cancelada por el organizador");
-    const canCancel=r.status==="confirmed"&&!activityCancelled;
+    const activityEnded=!!r.activities&&!activityIsFuture(r.activities);
+    const canCancel=r.status==="confirmed"&&!activityCancelled&&!activityEnded;
     return `<div class="block"><div class="block-body">${activityCancelled?`<div class="notice error"><strong>Actividad cancelada por el organizador</strong><div style="margin-top:4px;font-weight:500">Tu reserva queda guardada en el historial. No debes asistir a esta actividad.</div></div>`:""}<div style="display:flex;justify-content:space-between;gap:10px">
       <div><strong>${esc(r.activities?.title||"Actividad")}</strong><div class="sub">${fmtDate(r.activities?.event_date)} · ${fmtTime(r.activities?.event_time)} · ${esc(r.activities?.venue_name||r.activities?.area||"")}</div>
       ${r.activities?.address?`<div class="sub">${esc(r.activities.address)}</div>`:""}
       ${r.contact_phone?`<div class="sub">Contacto entregado: ${esc(r.contact_phone)}</div>`:""}</div>
-      <span class="status ${r.status==="confirmed"?"ok":"cancel"}">${activityCancelled?"Actividad cancelada":r.status==="confirmed"?"Confirmada":"Reserva cancelada"}</span></div>
+      <span class="status ${activityCancelled||r.status!=="confirmed"?"cancel":activityEnded?"":"ok"}">${activityCancelled?"Actividad cancelada":activityEnded&&r.status==="confirmed"?"Realizada":r.status==="confirmed"?"Confirmada":"Reserva cancelada"}</span></div>
       ${r.reason&&!activityCancelled?`<p class="sub">${esc(r.reason)}</p>`:""}
       ${canCancel?`<div class="quick-actions"><button class="btn btn-danger btn-sm" onclick="cancelReservation('${r.id}')">Cancelar reserva</button></div>`:""}
     </div></div>`;
